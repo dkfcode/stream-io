@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Play, Star, Calendar, Info, Plus, Check, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Star, Calendar, Info, Plus, Check, VolumeX, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { SearchResult, VideoResult } from '../types/tmdb';
 import { getVideos, getTopContentForAllPlatforms } from '../services/tmdb';
 import { STREAMING_SERVICES } from '../constants/streamingServices';
@@ -645,7 +645,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
             style={{ pointerEvents: 'auto' }}
             aria-label={isMuted ? 'Unmute trailer' : 'Mute trailer'}
           >
-            {isMuted ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
         )}
         

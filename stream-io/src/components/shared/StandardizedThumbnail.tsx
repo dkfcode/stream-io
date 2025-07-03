@@ -3,6 +3,7 @@ import { Star, Play, Info } from 'lucide-react';
 import type { SearchResult } from '../../types/tmdb';
 import StandardizedFavoriteButton from '../StandardizedFavoriteButton';
 import { getThumbnailOverlayTheme } from '../../utils/sectionThemes';
+import { STREAMING_SERVICES } from '../../constants/streamingServices';
 
 export interface StandardizedThumbnailProps {
   /** Content item to display */
@@ -15,6 +16,8 @@ export interface StandardizedThumbnailProps {
   showRating?: boolean;
   /** Whether to show media type badge */
   showMediaType?: boolean;
+  /** Whether to show platform badge */
+  showPlatformBadge?: boolean;
   /** Whether to show favorite button */
   showFavoriteButton?: boolean;
   /** Whether to show play button */
@@ -41,6 +44,7 @@ const StandardizedThumbnail: React.FC<StandardizedThumbnailProps> = ({
   showOverlay = true,
   showRating = true,
   showMediaType = true,
+  showPlatformBadge = true,
   showFavoriteButton = true,
   showPlayButton = true,
   onClick,
@@ -53,6 +57,9 @@ const StandardizedThumbnail: React.FC<StandardizedThumbnailProps> = ({
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const overlayTheme = getThumbnailOverlayTheme();
+
+  // Find the streaming platform for this content
+  const currentPlatform = item.platform ? STREAMING_SERVICES.find(service => service.id === item.platform) : null;
 
   // Size configurations
   const sizeConfig = {
@@ -120,20 +127,39 @@ const StandardizedThumbnail: React.FC<StandardizedThumbnailProps> = ({
           </div>
         )}
 
+        {/* Platform Badge - Top Left */}
+        {showPlatformBadge && currentPlatform && (
+          <div className="absolute top-2 left-2 z-20">
+            <div className="flex items-center space-x-1 bg-black/80 backdrop-blur-md px-2 py-1 rounded-full border border-gray-700/30 shadow-xl">
+              <img 
+                src={currentPlatform.logo} 
+                alt={currentPlatform.name}
+                className="w-3 h-3 rounded object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <span className="text-white text-xs font-medium hidden sm:inline">{currentPlatform.name}</span>
+            </div>
+          </div>
+        )}
+
         {/* Overlay */}
         {showOverlay && (
           <div className={`${overlayTheme.overlay} ${isHovered ? 'opacity-100' : ''}`}>
             <div className="absolute inset-0 flex flex-col justify-between p-3">
               {/* Top Row - Rating and Type Badge */}
               <div className="flex items-start justify-between">
-                {showRating && item.vote_average && item.vote_average > 0 && (
-                  <div className={overlayTheme.ratingBadge}>
-                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                    <span className="text-white text-xs font-medium">
-                      {item.vote_average.toFixed(1)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-start space-x-2">
+                  {showRating && item.vote_average && item.vote_average > 0 && (
+                    <div className={overlayTheme.ratingBadge}>
+                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                      <span className="text-white text-xs font-medium">
+                        {item.vote_average.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 
                 {showMediaType && (
                   <div className={overlayTheme.typeBadge}>

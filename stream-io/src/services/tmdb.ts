@@ -1728,10 +1728,10 @@ export const getSimilarContent = async (item: SearchResult): Promise<{ movies: S
 // Platform mapping for TMDB provider IDs
 const PLATFORM_PROVIDER_MAP: Record<string, number> = {
   '8': 8,        // Netflix
-  '119': 119,    // Prime Video
+  '9': 9,        // Prime Video (Fixed from 119 to 9)
   '337': 337,    // Disney+
   '15': 15,      // Hulu
-  '1899': 1899,  // Max
+  '384': 384,    // Max (Fixed from 1899 to 384)
   '350': 350,    // Apple TV+
   '386': 386,    // Peacock
   '531': 531     // Paramount+
@@ -1871,15 +1871,16 @@ export const getTopContentForAllPlatforms = async (): Promise<SearchResult[]> =>
     const allContent: SearchResult[] = [];
 
     // Get top movie and TV show for each major platform
+    // Updated to use the correct provider IDs and match STREAMING_SERVICES IDs
     const platforms = [
-      { id: 8, name: 'Netflix' },
-      { id: 337, name: 'Disney+' },
-      { id: 1899, name: 'Max' },
-      { id: 15, name: 'Hulu' },
-      { id: 119, name: 'Prime Video' },
-      { id: 350, name: 'Apple TV+' },
-      { id: 531, name: 'Paramount+' },
-      { id: 386, name: 'Peacock' }
+      { id: 8, name: 'Netflix', serviceId: 'netflix' },
+      { id: 337, name: 'Disney+', serviceId: 'disney-plus' },
+      { id: 384, name: 'Max', serviceId: 'hbo-max' },        // Fixed provider ID from 1899 to 384
+      { id: 15, name: 'Hulu', serviceId: 'hulu' },
+      { id: 9, name: 'Prime Video', serviceId: 'amazon-prime' },  // Fixed provider ID from 119 to 9
+      { id: 350, name: 'Apple TV+', serviceId: 'apple-tv' },
+      { id: 531, name: 'Paramount+', serviceId: 'paramount-plus' },
+      { id: 386, name: 'Peacock', serviceId: 'peacock' }
     ];
 
     console.log('Fetching top content for platforms:', platforms.map(p => p.name));
@@ -1894,11 +1895,13 @@ export const getTopContentForAllPlatforms = async (): Promise<SearchResult[]> =>
 
         if (topMovie) {
           console.log(`Found movie for ${platform.name}:`, topMovie.title);
-          allContent.push(topMovie);
+          // Use serviceId instead of numeric platform ID
+          allContent.push({ ...topMovie, platform: platform.serviceId });
         }
         if (topShow) {
           console.log(`Found TV show for ${platform.name}:`, topShow.name);
-          allContent.push(topShow);
+          // Use serviceId instead of numeric platform ID
+          allContent.push({ ...topShow, platform: platform.serviceId });
         }
       } catch {
         console.warn(`Failed to get content for platform ${platform.name} with ID ${platform.id}`);
