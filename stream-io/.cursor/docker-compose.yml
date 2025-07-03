@@ -1,0 +1,60 @@
+﻿# Docker Compose configuration for StreamGuide
+# This file provides an easy way to run the application with proper environment configuration
+
+version: '3.8'
+
+services:
+  streamguide:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Build-time environment variables (these are embedded in the client code)
+        - VITE_TMDB_ACCESS_TOKEN=${VITE_TMDB_ACCESS_TOKEN}
+        - VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3001}
+        - VITE_APP_DOMAIN=${VITE_APP_DOMAIN:-streamguide.io}
+        - NODE_ENV=${NODE_ENV:-production}
+    
+    ports:
+      - "3000:3000"
+    
+    environment:
+      # Runtime environment variables
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+    
+    # Environment file for local development
+    env_file:
+      - .env
+    
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "node", "-e", "http.get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Read-only root filesystem for security
+    read_only: false  # Set to true if you want maximum security (may need volume mounts)
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+# Optional: Development override
+# Create docker-compose.override.yml for development-specific settings

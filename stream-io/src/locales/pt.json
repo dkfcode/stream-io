@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "home": "Início",
+    "live": "Ao Vivo",
+    "list": "Lista",
+    "remote": "Controle"
+  },
+  "settings": {
+    "title": "Configurações",
+    "account": "Configurações da Conta",
+    "streaming": "Configurações de Streaming",
+    "app_settings": "Configurações do App",
+    "notifications": "Notificações",
+    "privacy": "Privacidade",
+    "reset": "Redefinir App",
+    "about": "Sobre",
+    "help": "Ajuda e Suporte",
+    "live_services": "Serviços ao Vivo"
+  },
+  "app_settings": {
+    "layout": "Layout",
+    "interface_density": "Densidade da Interface",
+    "interface_density_description": "Escolha seu espaçamento preferido",
+    "compact": "Compacto",
+    "standard": "Padrão",
+    "spacious": "Espaçoso",
+    "playback": "Reprodução",
+    "autoplay_videos": "Reprodução Automática de Vídeos",
+    "autoplay_videos_description": "Iniciar reprodução de vídeo automaticamente",
+    "audio_language": "Idioma do Áudio",
+    "audio_language_description": "Idioma preferido para vídeos e trailers",
+    "subtitles": "Legendas",
+    "subtitles_description": "Preferência de legendas para vídeos e trailers",
+    "localization": "Localização",
+    "language": "Idioma",
+    "region": "Região"
+  },
+  "content": {
+    "trending_near_you": "Em Alta Perto de Você",
+    "leaving_soon": "Saindo em Breve",
+    "newly_added": "Recém Adicionado",
+    "because_you_added": "Porque você adicionou {{title}}",
+    "top_movies": "Melhores Filmes",
+    "top_shows": "Melhores Séries",
+    "new_releases": "Novos Lançamentos",
+    "random_picks": "Escolhas Aleatórias",
+    "bingeworthy": "Para Maratonar",
+    "top_searches": "Mais Pesquisados"
+  },
+  "welcome": {
+    "title": "Bem-vindo ao StreamGuide",
+    "subtitle": "Seu companheiro personalizado de streaming",
+    "universal_search": "Busca Universal",
+    "live_on_demand": "Ao Vivo e Sob Demanda",
+    "personalized": "Personalizado",
+    "get_started": "Começar"
+  },
+  "remote": {
+    "connecting": "Conectando...",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "volume_up": "Aumentar Volume",
+    "volume_down": "Diminuir Volume",
+    "back": "Voltar",
+    "home": "Início",
+    "up": "Cima",
+    "down": "Baixo",
+    "left": "Esquerda",
+    "right": "Direita",
+    "select": "Selecionar",
+    "play_pause": "Play/Pausa",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "touchpad": "Touchpad",
+    "keyboard": "Teclado",
+    "apps": "Apps",
+    "touchpad_description": "Deslize e toque com um dedo para selecionar conteúdo na sua TV"
+  },
+  "about": {
+    "version": "Versão 1.0.0",
+    "github": "GitHub",
+    "github_description": "Ver código fonte",
+    "follow_us": "Nos Siga",
+    "visit_website": "Visitar Site",
+    "support_us": "Nos Apoie",
+    "support_description": "Ajude-nos a manter o StreamGuide gratuito",
+    "made_with_love": "Feito com ❤️ pela equipe StreamGuide",
+    "copyright": "© 2025 StreamGuide. Todos os direitos reservados."
+  },
+  "help": {
+    "faq": "Perguntas Frequentes",
+    "faq_description": "Encontre respostas para perguntas comuns",
+    "contact": "Contatar Suporte",
+    "contact_description": "Obtenha ajuda da nossa equipe",
+    "phone": "Suporte por Telefone",
+    "phone_description": "Ligue para nossa linha de suporte"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "try_again": "Tentar novamente",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "off": "Desligado"
+  },
+  "setup": {
+    "setup_complete": "Configuração Concluída!",
+    "personalize_experience": "Personalize Sua Experiência",
+    "setup_complete_description": "Você está pronto! Comece a descobrir conteúdo incrível.",
+    "personalize_description": "Estes passos nos ajudam a recomendar melhor conteúdo para você"
+  }
+} 

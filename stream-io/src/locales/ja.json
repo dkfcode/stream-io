@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "home": "ホーム",
+    "live": "ライブ",
+    "list": "リスト",
+    "remote": "リモコン"
+  },
+  "settings": {
+    "title": "設定",
+    "account": "アカウント設定",
+    "streaming": "ストリーミング設定",
+    "app_settings": "アプリ設定",
+    "notifications": "通知",
+    "privacy": "プライバシー",
+    "reset": "アプリをリセット",
+    "about": "このアプリについて",
+    "help": "ヘルプとサポート",
+    "live_services": "ライブサービス"
+  },
+  "app_settings": {
+    "layout": "レイアウト",
+    "interface_density": "インターフェイス密度",
+    "interface_density_description": "お好みの間隔を選択してください",
+    "compact": "コンパクト",
+    "standard": "標準",
+    "spacious": "ゆったり",
+    "playback": "再生",
+    "autoplay_videos": "動画自動再生",
+    "autoplay_videos_description": "動画再生を自動的に開始",
+    "audio_language": "音声言語",
+    "audio_language_description": "動画とトレーラーの優先言語",
+    "subtitles": "字幕",
+    "subtitles_description": "動画とトレーラーの字幕設定",
+    "localization": "ローカライゼーション",
+    "language": "言語",
+    "region": "地域"
+  },
+  "content": {
+    "trending_near_you": "あなたの近くでトレンド",
+    "leaving_soon": "間もなく終了",
+    "newly_added": "新しく追加",
+    "because_you_added": "{{title}}を追加したため",
+    "top_movies": "トップ映画",
+    "top_shows": "トップ番組",
+    "new_releases": "新作リリース",
+    "random_picks": "ランダム選択",
+    "bingeworthy": "一気見推奨",
+    "top_searches": "人気検索"
+  },
+  "welcome": {
+    "title": "StreamGuideへようこそ",
+    "subtitle": "あなた専用のストリーミングコンパニオン",
+    "universal_search": "ユニバーサル検索",
+    "live_on_demand": "ライブ＆オンデマンド",
+    "personalized": "パーソナライズ",
+    "get_started": "始める"
+  },
+  "remote": {
+    "connecting": "接続中...",
+    "connected": "接続済み",
+    "disconnected": "切断済み",
+    "volume_up": "音量を上げる",
+    "volume_down": "音量を下げる",
+    "back": "戻る",
+    "home": "ホーム",
+    "up": "上",
+    "down": "下",
+    "left": "左",
+    "right": "右",
+    "select": "選択",
+    "play_pause": "再生/一時停止",
+    "next": "次へ",
+    "previous": "前へ",
+    "touchpad": "タッチパッド",
+    "keyboard": "キーボード",
+    "apps": "アプリ",
+    "touchpad_description": "一本指でスワイプやタップしてTVのコンテンツを選択"
+  },
+  "about": {
+    "version": "バージョン 1.0.0",
+    "github": "GitHub",
+    "github_description": "ソースコードを表示",
+    "follow_us": "フォローする",
+    "visit_website": "ウェブサイトを訪問",
+    "support_us": "サポートする",
+    "support_description": "StreamGuideを無料で維持するのをお手伝いください",
+    "made_with_love": "StreamGuideチームが❤️で作成",
+    "copyright": "© 2025 StreamGuide. 全著作権所有。"
+  },
+  "help": {
+    "faq": "よくある質問",
+    "faq_description": "よくある質問の回答を見つける",
+    "contact": "サポートに連絡",
+    "contact_description": "私たちのチームからヘルプを受ける",
+    "phone": "電話サポート",
+    "phone_description": "サポートラインにお電話ください"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "try_again": "再試行",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "close": "閉じる",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "search": "検索",
+    "filter": "フィルター",
+    "off": "オフ"
+  },
+  "setup": {
+    "setup_complete": "セットアップ完了！",
+    "personalize_experience": "体験をパーソナライズ",
+    "setup_complete_description": "準備完了！素晴らしいコンテンツの発見を始めましょう。",
+    "personalize_description": "これらのステップで、より良いコンテンツをお勧めできます"
+  }
+} 

@@ -1,0 +1,14 @@
+# Custom PostgreSQL with StreamGuide schema
+FROM postgres:14-alpine
+
+# Copy schema file into the initialization directory
+COPY src/database/schema.sql /docker-entrypoint-initdb.d/01-schema.sql
+
+# Make sure the file has correct permissions
+RUN chmod 644 /docker-entrypoint-initdb.d/01-schema.sql
+
+# Verify the file exists and show its contents for debugging
+RUN echo "✅ Schema file copied successfully:" && \
+    ls -la /docker-entrypoint-initdb.d/ && \
+    echo "📊 Schema file size:" && \
+    wc -l /docker-entrypoint-initdb.d/01-schema.sql 

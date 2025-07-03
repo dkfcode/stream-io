@@ -1,0 +1,121 @@
+{
+  "navigation": {
+    "home": "Home",
+    "live": "Live",
+    "list": "List",
+    "remote": "Remote"
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account Settings",
+    "streaming": "Stream Settings",
+    "app_settings": "App Settings",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "reset": "Reset App",
+    "about": "About",
+    "help": "Help & Support",
+    "live_services": "Live Services"
+  },
+  "app_settings": {
+    "layout": "Layout",
+    "interface_density": "Interface Density",
+    "interface_density_description": "Choose your preferred spacing",
+    "compact": "Compact",
+    "standard": "Standard",
+    "spacious": "Spacious",
+    "playback": "Playback",
+    "autoplay_videos": "Auto-play Videos",
+    "autoplay_videos_description": "Automatically start video playback",
+    "audio_language": "Audio Language",
+    "audio_language_description": "Preferred language for videos and trailers",
+    "subtitles": "Subtitles",
+    "subtitles_description": "Subtitle preference for videos and trailers",
+    "localization": "Localization",
+    "language": "Language",
+    "region": "Region"
+  },
+  "content": {
+    "trending_near_you": "Trending Near You",
+    "curated_for_you": "Curated For You",
+    "leaving_soon": "Leaving Soon",
+    "newly_added": "Newly Added",
+    "because_you_added": "Because you added {{title}}",
+    "top_movies": "Top Movies",
+    "top_shows": "Top Shows",
+    "new_releases": "New Releases",
+    "random_picks": "Random Picks",
+    "bingeworthy": "Bingeworthy",
+    "top_searches": "Top Searches",
+    "hidden_gems": "Hidden Gems"
+  },
+  "welcome": {
+    "title": "Welcome to StreamGuide",
+    "subtitle": "Your personalized streaming companion",
+    "universal_search": "Universal Search",
+    "live_on_demand": "Live & On-Demand",
+    "personalized": "Personalized",
+    "get_started": "Get Started"
+  },
+  "remote": {
+    "connecting": "Connecting...",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "volume_up": "Volume Up",
+    "volume_down": "Volume Down",
+    "back": "Back",
+    "home": "Home",
+    "up": "Up",
+    "down": "Down",
+    "left": "Left",
+    "right": "Right",
+    "select": "Select",
+    "play_pause": "Play/Pause",
+    "next": "Next",
+    "previous": "Previous",
+    "touchpad": "Touchpad",
+    "keyboard": "Keyboard",
+    "apps": "Apps",
+    "touchpad_description": "Swipe and tap with one finger to select content on your TV"
+  },
+  "about": {
+    "version": "Version 1.0.0",
+    "github": "GitHub",
+    "github_description": "View source code",
+    "follow_us": "Follow Us",
+    "visit_website": "Visit Website",
+    "support_us": "Support Us",
+    "support_description": "Help us keep StreamGuide free",
+    "made_with_love": "Made with ❤️ by the StreamGuide team",
+    "copyright": "© 2025 StreamGuide. All rights reserved."
+  },
+  "help": {
+    "faq": "Frequently Asked Questions",
+    "faq_description": "Find answers to common questions",
+    "contact": "Contact Support",
+    "contact_description": "Get help from our team",
+    "phone": "Phone Support",
+    "phone_description": "Call our support line"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "try_again": "Try again",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "off": "Off"
+  },
+  "setup": {
+    "setup_complete": "Setup Complete!",
+    "personalize_experience": "Personalize Your Experience",
+    "setup_complete_description": "You're all set! Start discovering amazing content.",
+    "personalize_description": "These steps help us recommend better content for you"
+  }
+} 

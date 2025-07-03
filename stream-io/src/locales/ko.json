@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "home": "홈",
+    "live": "라이브",
+    "list": "목록",
+    "remote": "리모컨"
+  },
+  "settings": {
+    "title": "설정",
+    "account": "계정 설정",
+    "streaming": "스트리밍 설정",
+    "app_settings": "앱 설정",
+    "notifications": "알림",
+    "privacy": "개인정보",
+    "reset": "앱 초기화",
+    "about": "정보",
+    "help": "도움말 및 지원",
+    "live_services": "라이브 서비스"
+  },
+  "app_settings": {
+    "layout": "레이아웃",
+    "interface_density": "인터페이스 밀도",
+    "interface_density_description": "선호하는 간격을 선택하세요",
+    "compact": "밀도 높음",
+    "standard": "표준",
+    "spacious": "여유롭게",
+    "playback": "재생",
+    "autoplay_videos": "동영상 자동 재생",
+    "autoplay_videos_description": "동영상 재생을 자동으로 시작",
+    "audio_language": "오디오 언어",
+    "audio_language_description": "동영상과 예고편의 선호 언어",
+    "subtitles": "자막",
+    "subtitles_description": "동영상과 예고편의 자막 설정",
+    "localization": "현지화",
+    "language": "언어",
+    "region": "지역"
+  },
+  "content": {
+    "trending_near_you": "내 주변 인기 콘텐츠",
+    "leaving_soon": "곧 종료",
+    "newly_added": "새로 추가됨",
+    "because_you_added": "{{title}}을(를) 추가했기 때문에",
+    "top_movies": "인기 영화",
+    "top_shows": "인기 프로그램",
+    "new_releases": "신작",
+    "random_picks": "랜덤 선택",
+    "bingeworthy": "몰아보기 추천",
+    "top_searches": "인기 검색"
+  },
+  "welcome": {
+    "title": "StreamGuide에 오신 것을 환영합니다",
+    "subtitle": "당신만의 맞춤형 스트리밍 동반자",
+    "universal_search": "통합 검색",
+    "live_on_demand": "라이브 및 주문형",
+    "personalized": "개인화",
+    "get_started": "시작하기"
+  },
+  "remote": {
+    "connecting": "연결 중...",
+    "connected": "연결됨",
+    "disconnected": "연결 해제됨",
+    "volume_up": "볼륨 높이기",
+    "volume_down": "볼륨 낮추기",
+    "back": "뒤로",
+    "home": "홈",
+    "up": "위",
+    "down": "아래",
+    "left": "왼쪽",
+    "right": "오른쪽",
+    "select": "선택",
+    "play_pause": "재생/일시정지",
+    "next": "다음",
+    "previous": "이전",
+    "touchpad": "터치패드",
+    "keyboard": "키보드",
+    "apps": "앱",
+    "touchpad_description": "한 손가락으로 스와이프하고 터치하여 TV 콘텐츠를 선택하세요"
+  },
+  "about": {
+    "version": "버전 1.0.0",
+    "github": "GitHub",
+    "github_description": "소스 코드 보기",
+    "follow_us": "팔로우하기",
+    "visit_website": "웹사이트 방문",
+    "support_us": "후원하기",
+    "support_description": "StreamGuide를 무료로 유지하는 데 도움을 주세요",
+    "made_with_love": "StreamGuide 팀이 ❤️로 제작",
+    "copyright": "© 2025 StreamGuide. 모든 권리 보유."
+  },
+  "help": {
+    "faq": "자주 묻는 질문",
+    "faq_description": "일반적인 질문에 대한 답변 찾기",
+    "contact": "지원팀 연락",
+    "contact_description": "우리 팀의 도움 받기",
+    "phone": "전화 지원",
+    "phone_description": "지원 라인으로 전화하기"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류",
+    "try_again": "다시 시도",
+    "cancel": "취소",
+    "confirm": "확인",
+    "save": "저장",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "search": "검색",
+    "filter": "필터",
+    "off": "끄기"
+  },
+  "setup": {
+    "setup_complete": "설정 완료!",
+    "personalize_experience": "경험을 개인화하세요",
+    "setup_complete_description": "모든 준비가 끝났습니다! 멋진 콘텐츠 발견을 시작하세요.",
+    "personalize_description": "이러한 단계는 더 나은 콘텐츠를 추천하는 데 도움이 됩니다"
+  }
+} 

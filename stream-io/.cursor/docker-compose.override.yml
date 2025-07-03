@@ -1,0 +1,43 @@
+﻿# Docker Compose override for development
+# This file is automatically loaded by docker-compose for development overrides
+
+version: '3.8'
+
+services:
+  streamguide:
+    # Override build context for development
+    build:
+      target: builder  # Use builder stage for development with hot reload
+      args:
+        - NODE_ENV=development
+    
+    # Override ports for development
+    ports:
+      - "5173:5173"  # Vite dev server
+      - "3000:3000"  # Preview server
+    
+    # Development environment variables
+    environment:
+      - NODE_ENV=development
+      - VITE_DEV_MODE=true
+      - VITE_DEBUG=true
+    
+    # Volume mounts for development hot reload
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+    
+    # Override command for development
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    
+    # Remove resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'

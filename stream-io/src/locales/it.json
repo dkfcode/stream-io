@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "home": "Home",
+    "live": "Dal Vivo",
+    "list": "Lista",
+    "remote": "Telecomando"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "account": "Impostazioni Account",
+    "streaming": "Impostazioni Streaming",
+    "app_settings": "Impostazioni App",
+    "notifications": "Notifiche",
+    "privacy": "Privacy",
+    "reset": "Reimposta App",
+    "about": "Informazioni",
+    "help": "Aiuto e Supporto",
+    "live_services": "Servizi Live"
+  },
+  "app_settings": {
+    "layout": "Layout",
+    "interface_density": "Densità Interfaccia",
+    "interface_density_description": "Scegli la tua spaziatura preferita",
+    "compact": "Compatto",
+    "standard": "Standard",
+    "spacious": "Spazioso",
+    "playback": "Riproduzione",
+    "autoplay_videos": "Riproduzione Automatica Video",
+    "autoplay_videos_description": "Avvia automaticamente la riproduzione video",
+    "audio_language": "Lingua Audio",
+    "audio_language_description": "Lingua preferita per video e trailer",
+    "subtitles": "Sottotitoli",
+    "subtitles_description": "Preferenza sottotitoli per video e trailer",
+    "localization": "Localizzazione",
+    "language": "Lingua",
+    "region": "Regione"
+  },
+  "content": {
+    "trending_near_you": "Di Tendenza Vicino a Te",
+    "leaving_soon": "In Scadenza",
+    "newly_added": "Appena Aggiunto",
+    "because_you_added": "Perché hai aggiunto {{title}}",
+    "top_movies": "Film Migliori",
+    "top_shows": "Serie Migliori",
+    "new_releases": "Nuove Uscite",
+    "random_picks": "Selezioni Casuali",
+    "bingeworthy": "Da Guardare Tutto d'un Fiato",
+    "top_searches": "Ricerche Popolari"
+  },
+  "welcome": {
+    "title": "Benvenuto su StreamGuide",
+    "subtitle": "Il tuo compagno di streaming personalizzato",
+    "universal_search": "Ricerca Universale",
+    "live_on_demand": "Live e On-Demand",
+    "personalized": "Personalizzato",
+    "get_started": "Inizia"
+  },
+  "remote": {
+    "connecting": "Connessione...",
+    "connected": "Connesso",
+    "disconnected": "Disconnesso",
+    "volume_up": "Alza Volume",
+    "volume_down": "Abbassa Volume",
+    "back": "Indietro",
+    "home": "Home",
+    "up": "Su",
+    "down": "Giù",
+    "left": "Sinistra",
+    "right": "Destra",
+    "select": "Seleziona",
+    "play_pause": "Play/Pausa",
+    "next": "Avanti",
+    "previous": "Indietro",
+    "touchpad": "Touchpad",
+    "keyboard": "Tastiera",
+    "apps": "App",
+    "touchpad_description": "Scorri e tocca con un dito per selezionare contenuti sulla tua TV"
+  },
+  "about": {
+    "version": "Versione 1.0.0",
+    "github": "GitHub",
+    "github_description": "Visualizza codice sorgente",
+    "follow_us": "Seguici",
+    "visit_website": "Visita Sito Web",
+    "support_us": "Supportaci",
+    "support_description": "Aiutaci a mantenere StreamGuide gratuito",
+    "made_with_love": "Fatto con ❤️ dal team StreamGuide",
+    "copyright": "© 2025 StreamGuide. Tutti i diritti riservati."
+  },
+  "help": {
+    "faq": "Domande Frequenti",
+    "faq_description": "Trova risposte alle domande comuni",
+    "contact": "Contatta Supporto",
+    "contact_description": "Ricevi aiuto dal nostro team",
+    "phone": "Supporto Telefonico",
+    "phone_description": "Chiama la nostra linea di supporto"
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "try_again": "Riprova",
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "save": "Salva",
+    "close": "Chiudi",
+    "back": "Indietro",
+    "next": "Avanti",
+    "previous": "Precedente",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "off": "Spento"
+  },
+  "setup": {
+    "setup_complete": "Configurazione Completata!",
+    "personalize_experience": "Personalizza la Tua Esperienza",
+    "setup_complete_description": "Sei pronto! Inizia a scoprire contenuti fantastici.",
+    "personalize_description": "Questi passaggi ci aiutano a consigliarti contenuti migliori"
+  }
+} 

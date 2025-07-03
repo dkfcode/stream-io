@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "home": "Startseite",
+    "live": "Live",
+    "list": "Liste",
+    "remote": "Fernbedienung"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "account": "Kontoeinstellungen",
+    "streaming": "Streaming-Einstellungen",
+    "app_settings": "App-Einstellungen",
+    "notifications": "Benachrichtigungen",
+    "privacy": "Datenschutz",
+    "reset": "App Zurücksetzen",
+    "about": "Über",
+    "help": "Hilfe & Support",
+    "live_services": "Live-Dienste"
+  },
+  "app_settings": {
+    "layout": "Layout",
+    "interface_density": "Interface-Dichte",
+    "interface_density_description": "Wählen Sie Ihren bevorzugten Abstand",
+    "compact": "Kompakt",
+    "standard": "Standard",
+    "spacious": "Geräumig",
+    "playback": "Wiedergabe",
+    "autoplay_videos": "Videos Automatisch Abspielen",
+    "autoplay_videos_description": "Video-Wiedergabe automatisch starten",
+    "audio_language": "Audio-Sprache",
+    "audio_language_description": "Bevorzugte Sprache für Videos und Trailer",
+    "subtitles": "Untertitel",
+    "subtitles_description": "Untertitel-Präferenz für Videos und Trailer",
+    "localization": "Lokalisierung",
+    "language": "Sprache",
+    "region": "Region"
+  },
+  "content": {
+    "trending_near_you": "Trending in Ihrer Nähe",
+    "leaving_soon": "Bald Nicht Mehr Verfügbar",
+    "newly_added": "Neu Hinzugefügt",
+    "because_you_added": "Weil Sie {{title}} hinzugefügt haben",
+    "top_movies": "Top Filme",
+    "top_shows": "Top Serien",
+    "new_releases": "Neue Veröffentlichungen",
+    "random_picks": "Zufällige Auswahl",
+    "bingeworthy": "Binge-würdig",
+    "top_searches": "Top Suchen"
+  },
+  "welcome": {
+    "title": "Willkommen bei StreamGuide",
+    "subtitle": "Ihr persönlicher Streaming-Begleiter",
+    "universal_search": "Universelle Suche",
+    "live_on_demand": "Live & On-Demand",
+    "personalized": "Personalisiert",
+    "get_started": "Loslegen"
+  },
+  "remote": {
+    "connecting": "Verbinden...",
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "volume_up": "Lautstärke Erhöhen",
+    "volume_down": "Lautstärke Verringern",
+    "back": "Zurück",
+    "home": "Startseite",
+    "up": "Hoch",
+    "down": "Runter",
+    "left": "Links",
+    "right": "Rechts",
+    "select": "Auswählen",
+    "play_pause": "Wiedergabe/Pause",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "touchpad": "Touchpad",
+    "keyboard": "Tastatur",
+    "apps": "Apps",
+    "touchpad_description": "Wischen und tippen Sie mit einem Finger, um Inhalte auf Ihrem TV auszuwählen"
+  },
+  "about": {
+    "version": "Version 1.0.0",
+    "github": "GitHub",
+    "github_description": "Quellcode anzeigen",
+    "follow_us": "Folgen Sie uns",
+    "visit_website": "Website Besuchen",
+    "support_us": "Unterstützen Sie uns",
+    "support_description": "Helfen Sie uns, StreamGuide kostenlos zu halten",
+    "made_with_love": "Mit ❤️ gemacht vom StreamGuide Team",
+    "copyright": "© 2025 StreamGuide. Alle Rechte vorbehalten."
+  },
+  "help": {
+    "faq": "Häufig Gestellte Fragen",
+    "faq_description": "Finden Sie Antworten auf häufige Fragen",
+    "contact": "Support Kontaktieren",
+    "contact_description": "Hilfe von unserem Team erhalten",
+    "phone": "Telefon-Support",
+    "phone_description": "Rufen Sie unsere Support-Hotline an"
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "try_again": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "off": "Aus"
+  },
+  "setup": {
+    "setup_complete": "Einrichtung Abgeschlossen!",
+    "personalize_experience": "Personalisieren Sie Ihr Erlebnis",
+    "setup_complete_description": "Sie sind bereit! Beginnen Sie mit der Entdeckung großartiger Inhalte.",
+    "personalize_description": "Diese Schritte helfen uns, Ihnen bessere Inhalte zu empfehlen"
+  }
+} 

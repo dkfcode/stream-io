@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "home": "首页",
+    "live": "直播",
+    "list": "列表",
+    "remote": "遥控器"
+  },
+  "settings": {
+    "title": "设置",
+    "account": "账户设置",
+    "streaming": "流媒体设置",
+    "app_settings": "应用设置",
+    "notifications": "通知",
+    "privacy": "隐私",
+    "reset": "重置应用",
+    "about": "关于",
+    "help": "帮助与支持",
+    "live_services": "直播服务"
+  },
+  "app_settings": {
+    "layout": "布局",
+    "interface_density": "界面密度",
+    "interface_density_description": "选择您偏好的间距",
+    "compact": "紧凑",
+    "standard": "标准",
+    "spacious": "宽松",
+    "playback": "播放",
+    "autoplay_videos": "自动播放视频",
+    "autoplay_videos_description": "自动开始视频播放",
+    "audio_language": "音频语言",
+    "audio_language_description": "视频和预告片的首选语言",
+    "subtitles": "字幕",
+    "subtitles_description": "视频和预告片的字幕偏好",
+    "localization": "本地化",
+    "language": "语言",
+    "region": "地区"
+  },
+  "content": {
+    "trending_near_you": "您附近的热门内容",
+    "leaving_soon": "即将下线",
+    "newly_added": "最新添加",
+    "because_you_added": "因为您添加了{{title}}",
+    "top_movies": "热门电影",
+    "top_shows": "热门节目",
+    "new_releases": "新发布",
+    "random_picks": "随机推荐",
+    "bingeworthy": "值得刷剧",
+    "top_searches": "热门搜索"
+  },
+  "welcome": {
+    "title": "欢迎使用StreamGuide",
+    "subtitle": "您的个性化流媒体伴侣",
+    "universal_search": "通用搜索",
+    "live_on_demand": "直播和点播",
+    "personalized": "个性化",
+    "get_started": "开始使用"
+  },
+  "remote": {
+    "connecting": "连接中...",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "volume_up": "音量增加",
+    "volume_down": "音量减少",
+    "back": "返回",
+    "home": "首页",
+    "up": "向上",
+    "down": "向下",
+    "left": "向左",
+    "right": "向右",
+    "select": "选择",
+    "play_pause": "播放/暂停",
+    "next": "下一个",
+    "previous": "上一个",
+    "touchpad": "触控板",
+    "keyboard": "键盘",
+    "apps": "应用",
+    "touchpad_description": "用一根手指滑动和点击来选择电视上的内容"
+  },
+  "about": {
+    "version": "版本 1.0.0",
+    "github": "GitHub",
+    "github_description": "查看源代码",
+    "follow_us": "关注我们",
+    "visit_website": "访问网站",
+    "support_us": "支持我们",
+    "support_description": "帮助我们保持StreamGuide免费",
+    "made_with_love": "由StreamGuide团队用❤️制作",
+    "copyright": "© 2025 StreamGuide. 版权所有。"
+  },
+  "help": {
+    "faq": "常见问题",
+    "faq_description": "查找常见问题的答案",
+    "contact": "联系支持",
+    "contact_description": "从我们的团队获得帮助",
+    "phone": "电话支持",
+    "phone_description": "拨打我们的支持热线"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "try_again": "重试",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个",
+    "search": "搜索",
+    "filter": "筛选",
+    "off": "关闭"
+  },
+  "setup": {
+    "setup_complete": "设置完成！",
+    "personalize_experience": "个性化您的体验",
+    "setup_complete_description": "一切就绪！开始发现精彩内容吧。",
+    "personalize_description": "这些步骤帮助我们为您推荐更好的内容"
+  }
+} 

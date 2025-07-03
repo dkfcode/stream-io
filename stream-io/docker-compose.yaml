@@ -1,0 +1,80 @@
+services:
+  # PostgreSQL Database  
+  db:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-streamguide_production}
+      POSTGRES_USER: ${DB_USER:-streamguide_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # Force recreation by setting a unique identifier
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    volumes:
+      - postgres_data_fresh_20250703:/var/lib/postgresql/data
+    networks:
+      - streamguide-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-streamguide_user} -d ${DB_NAME:-streamguide_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Main Application (Backend API + Frontend Static Files)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Explicitly pass ALL build-time variables
+        VITE_API_URL: ${VITE_API_URL:-https://streamguide.io}
+        VITE_TMDB_ACCESS_TOKEN: ${VITE_TMDB_ACCESS_TOKEN}
+        VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY}
+        VITE_APP_URL: ${VITE_APP_URL:-https://streamguide.io}
+        NODE_ENV: production
+        # Add timestamp to force rebuild
+        BUILD_TIMESTAMP: ${BUILD_TIMESTAMP:-$(date +%s)}
+    restart: unless-stopped
+    environment:
+      # Database Configuration
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-streamguide_production}
+      DB_USER: ${DB_USER:-streamguide_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      
+      # Server Configuration
+      PORT: 3000
+      NODE_ENV: production
+      
+      # API Keys (Runtime)
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - streamguide-network
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data_fresh_20250703:
+    driver: local
+
+networks:
+  streamguide-network:
+    driver: bridge

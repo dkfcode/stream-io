@@ -1,0 +1,121 @@
+{
+  "navigation": {
+    "home": "Inicio",
+    "live": "En Vivo",
+    "list": "Lista",
+    "remote": "Control"
+  },
+  "settings": {
+    "title": "Configuración",
+    "account": "Configuración de Cuenta",
+    "streaming": "Configuración de Transmisión",
+    "app_settings": "Configuración de la App",
+    "notifications": "Notificaciones",
+    "privacy": "Privacidad",
+    "reset": "Restablecer App",
+    "about": "Acerca de",
+    "help": "Ayuda y Soporte",
+    "live_services": "Servicios en Vivo"
+  },
+  "app_settings": {
+    "layout": "Diseño",
+    "interface_density": "Densidad de Interfaz",
+    "interface_density_description": "Elige tu espaciado preferido",
+    "compact": "Compacto",
+    "standard": "Estándar",
+    "spacious": "Amplio",
+    "playback": "Reproducción",
+    "autoplay_videos": "Reproducir Videos Automáticamente",
+    "autoplay_videos_description": "Iniciar reproducción de video automáticamente",
+    "audio_language": "Idioma de Audio",
+    "audio_language_description": "Idioma preferido para videos y trailers",
+    "subtitles": "Subtítulos",
+    "subtitles_description": "Preferencia de subtítulos para videos y trailers",
+    "localization": "Localización",
+    "language": "Idioma",
+    "region": "Región"
+  },
+  "content": {
+    "trending_near_you": "Tendencias Cerca de Ti",
+    "curated_for_you": "Seleccionado Para Ti",
+    "leaving_soon": "Se Van Pronto",
+    "newly_added": "Recién Agregado",
+    "because_you_added": "Porque agregaste {{title}}",
+    "top_movies": "Mejores Películas",
+    "top_shows": "Mejores Series",
+    "new_releases": "Nuevos Lanzamientos",
+    "random_picks": "Selecciones Aleatorias",
+    "bingeworthy": "Para Ver de Corrido",
+    "top_searches": "Más Buscados",
+    "hidden_gems": "Joyas Ocultas"
+  },
+  "welcome": {
+    "title": "Bienvenido a StreamGuide",
+    "subtitle": "Tu compañero personalizado de streaming",
+    "universal_search": "Búsqueda Universal",
+    "live_on_demand": "En Vivo y Bajo Demanda",
+    "personalized": "Personalizado",
+    "get_started": "Comenzar"
+  },
+  "remote": {
+    "connecting": "Conectando...",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "volume_up": "Subir Volumen",
+    "volume_down": "Bajar Volumen",
+    "back": "Atrás",
+    "home": "Inicio",
+    "up": "Arriba",
+    "down": "Abajo",
+    "left": "Izquierda",
+    "right": "Derecha",
+    "select": "Seleccionar",
+    "play_pause": "Reproducir/Pausar",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "touchpad": "Panel Táctil",
+    "keyboard": "Teclado",
+    "apps": "Apps",
+    "touchpad_description": "Desliza y toca con un dedo para seleccionar contenido en tu TV"
+  },
+  "about": {
+    "version": "Versión 1.0.0",
+    "github": "GitHub",
+    "github_description": "Ver código fuente",
+    "follow_us": "Síguenos",
+    "visit_website": "Visitar Sitio Web",
+    "support_us": "Apóyanos",
+    "support_description": "Ayúdanos a mantener StreamGuide gratis",
+    "made_with_love": "Hecho con ❤️ por el equipo de StreamGuide",
+    "copyright": "© 2025 StreamGuide. Todos los derechos reservados."
+  },
+  "help": {
+    "faq": "Preguntas Frecuentes",
+    "faq_description": "Encuentra respuestas a preguntas comunes",
+    "contact": "Contactar Soporte",
+    "contact_description": "Obtén ayuda de nuestro equipo",
+    "phone": "Soporte Telefónico",
+    "phone_description": "Llama a nuestra línea de soporte"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "try_again": "Intentar de nuevo",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "off": "Desactivado"
+  },
+  "setup": {
+    "setup_complete": "¡Configuración Completa!",
+    "personalize_experience": "Personaliza Tu Experiencia",
+    "setup_complete_description": "¡Ya estás listo! Comienza a descubrir contenido increíble.",
+    "personalize_description": "Estos pasos nos ayudan a recomendarte mejor contenido"
+  }
+} 
