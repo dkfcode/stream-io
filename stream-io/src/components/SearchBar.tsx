@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Search, Clock, Trash2, Star, User, Tv, Film, Building2, ChevronRight, Loader, Brain, Sparkles } from 'lucide-react';
+import { Search, Clock, Trash2, Star, User, Tv, Film, Building2, ChevronRight, Loader, Brain, Sparkles, TrendingUp, Award } from 'lucide-react';
 import { mlSearchService } from '../services/mlSearchService';
 import { getContentByNetwork, getContentByPerson, getStreamingServices } from '../services/tmdb';
 import type { SearchResult, StreamingService, EnhancedSearchResult, PersonResult, RecentSearch } from '../types/tmdb';
@@ -38,6 +38,10 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
   const [selectedActor, setSelectedActor] = useState<PersonResult | null>(null);
   const [isViewingActor, setIsViewingActor] = useState(false);
   const [showAIInsights, setShowAIInsights] = useState(false);
+  
+  // Enhanced actor preview state
+  const [actorFilmography, setActorFilmography] = useState<Record<number, SearchResult[]>>({});
+  const [loadingFilmography, setLoadingFilmography] = useState<Set<number>>(new Set());
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -70,6 +74,42 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
     }
   }, []);
 
+  // Load actor filmography for enhanced previews
+  useEffect(() => {
+    const loadActorPreviews = async () => {
+      const actors = getActorResults();
+      for (const actor of actors.slice(0, 3)) { // Limit to top 3 actors for performance
+        if (!actorFilmography[actor.id] && !loadingFilmography.has(actor.id)) {
+          setLoadingFilmography(prev => new Set(prev).add(actor.id));
+          
+          try {
+            const filmography = await getContentByPerson(actor.id);
+            const topContent = filmography
+              .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+              .slice(0, 3);
+            
+            setActorFilmography(prev => ({
+              ...prev,
+              [actor.id]: topContent
+            }));
+          } catch (error) {
+            console.warn(`Failed to load filmography for actor ${actor.id}:`, error);
+          } finally {
+            setLoadingFilmography(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(actor.id);
+              return newSet;
+            });
+          }
+        }
+      }
+    };
+
+    if (searchResults && getActorResults().length > 0) {
+      loadActorPreviews();
+    }
+  }, [searchResults, actorFilmography, loadingFilmography]);
+
   // Enhanced debounced search function using ML Search Service
   const debouncedSearch = useRef(
     debounce(async (searchQuery: string) => {
@@ -80,18 +120,23 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
       }
 
       try {
+        // Detect if this looks like an actor search for better results
+        const looksLikeActorSearch = /^[a-z\s]{2,}$/i.test(searchQuery.trim()) && 
+                                   searchQuery.trim().split(' ').length >= 1 &&
+                                   searchQuery.trim().split(' ').length <= 4;
+        
         // Use the enhanced ML search service
         const mlResults = await mlSearchService.performMLSearch(searchQuery, {
           includePersonContent: true,
-          includeNetworkContent: true,
-          maxResults: 12
+          maxResults: looksLikeActorSearch ? 16 : 12 // More results for potential actor searches
         });
         
         console.log('ML Search Results:', {
           query: searchQuery,
           confidence: mlResults.confidence,
           strategy: mlResults.searchStrategy,
-          insights: mlResults.aiInsights
+          insights: mlResults.aiInsights,
+          isActorSearch: looksLikeActorSearch
         });
         
         // Convert ML results to the expected format for UI compatibility
@@ -129,7 +174,7 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
           onResultsChange?.(false);
         }
       }
-    }, 300)
+    }, 200) // Reduced from 300ms to 200ms for faster response
   ).current;
 
   const handleSearchChange = (value: string) => {
@@ -365,7 +410,81 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
   };
 
   const getActorResults = () => {
-    return searchResults?.results.filter(item => item.media_type === 'person') || [];
+    if (!searchResults) return [];
+    
+    const actors = searchResults.results.filter(result => result.media_type === 'person');
+    
+    // Detect if this is likely an actor search to show more results
+    const looksLikeActorSearch = searchResults.searchStrategy.includes('actor') || 
+                                searchResults.aiInsights?.queryIntent === 'actor_search' ||
+                                /^[a-z\s]{2,}$/i.test(query.trim()) && 
+                                query.trim().split(' ').length >= 1 &&
+                                query.trim().split(' ').length <= 4;
+    
+    // Return more actors for actor-focused searches
+    const maxActors = looksLikeActorSearch ? 8 : 5;
+    return actors.slice(0, maxActors);
+  };
+
+  // Enhanced actor rendering function
+  const renderEnhancedActorCard = (actor: SearchResult, index: number) => {
+    const filmography = actorFilmography[actor.id] || [];
+    const isLoading = loadingFilmography.has(actor.id);
+
+    return (
+      <button
+        key={`actor-${actor.id}`}
+        onClick={() => handleActorClick(actor)}
+        className="w-full text-left p-6 hover:bg-gray-800/30 rounded-lg group transition-all duration-200 border border-transparent hover:border-purple-500/20"
+      >
+        <div className="flex items-start gap-4">
+          {/* Actor Profile Image */}
+          <div className="relative flex-shrink-0">
+            {actor.profile_path ? (
+              <img
+                src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                alt={actor.name}
+                className="w-16 h-16 object-cover rounded-full ring-2 ring-gray-600 group-hover:ring-purple-500 transition-all duration-200"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center ring-2 ring-gray-600 group-hover:ring-purple-500 transition-all duration-200">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
+            {/* Popularity Indicator */}
+            {actor.popularity && actor.popularity > 15 && (
+              <div className="absolute -bottom-1 -right-1 bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                {Math.round(actor.popularity)}
+              </div>
+            )}
+          </div>
+
+          {/* Actor Information */}
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="text-lg font-semibold text-white group-hover:text-purple-400 transition-colors">
+                  {actor.name}
+                </h3>
+                <div className="flex items-center text-gray-400 text-sm mt-1">
+                  <User className="w-4 h-4 mr-1" />
+                  <span>{actor.known_for_department || 'Acting'}</span>
+                  {actor.popularity && actor.popularity > 10 && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <TrendingUp className="w-4 h-4 mr-1" />
+                      <span>Popular</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-purple-400 transition-colors flex-shrink-0" />
+            </div>
+          </div>
+        </div>
+      </button>
+    );
   };
 
   // Use useImperativeHandle to expose closeSearch method
@@ -381,7 +500,7 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
         <input
           ref={searchInputRef}
           type="text"
-                      placeholder={currentTab === 'watchlist' ? 'Search your lists by title, genre, or list name...' : 'Search movies, TV shows, actors, networks...'}
+          placeholder={currentTab === 'watchlist' ? 'Search your lists by title, genre, or list name...' : 'Search movies, TV shows, actors, networks...'}
           value={query}
           onChange={(e) => handleSearchChange(e.target.value)}
           onFocus={handleFocus}
@@ -614,47 +733,15 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
                 </div>
               )}
 
-              {/* Actors Section */}
+              {/* Enhanced Actors Section */}
               {(contentFilter === 'topResults' || contentFilter === 'actors') && getActorResults().length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Actors ({getActorResults().length})
                   </h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    {getActorResults().slice(0, 8).map((actor) => (
-                      <button
-                        key={`actor-${actor.id}`}
-                        onClick={() => handleActorClick(actor)}
-                        className="w-full text-left p-4 hover:bg-gray-800/50 rounded-lg flex items-center gap-4 group transition-all duration-200"
-                      >
-                        <div className="relative flex-shrink-0">
-                          {actor.profile_path ? (
-                            <img
-                              src={`https://image.tmdb.org/t/p/w92${actor.profile_path}`}
-                              alt={actor.name}
-                              className="w-12 h-12 object-cover rounded-full"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
-                              <User className="w-6 h-6 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-white font-medium group-hover:text-purple-400 transition-colors">
-                            {actor.name}
-                          </div>
-                          <div className="text-gray-400 text-sm">{actor.known_for_department}</div>
-                          {actor.known_for && actor.known_for.length > 0 && (
-                            <div className="text-gray-500 text-xs mt-1">
-                              Known for: {actor.known_for.slice(0, 2).map(item => item.title || item.name).join(', ')}
-                            </div>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-purple-400 transition-colors" />
-                      </button>
-                    ))}
+                  <div className="space-y-3">
+                    {getActorResults().map((actor, index) => renderEnhancedActorCard(actor, index))}
                   </div>
                 </div>
               )}

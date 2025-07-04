@@ -16,7 +16,7 @@ interface ActorDetailPageProps {
 }
 
 const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
-  const { effectiveTheme } = useTheme();
+  const { effectiveTheme, themeSettings } = useTheme();
   const [filmography, setFilmography] = useState<{ movies: SearchResult[], shows: SearchResult[] }>({ movies: [], shows: [] });
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<SearchResult | null>(null);
@@ -42,10 +42,10 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [isTextPermanentlyVisible, setIsTextPermanentlyVisible] = useState(false);
   
-  const timeoutRefs = useRef<Record<number, number>>({});
+  const timeoutRefs = useRef<Record<number, NodeJS.Timeout>>({});
   const videoRefs = useRef<Record<number, HTMLIFrameElement | null>>({});
-  const manualControlTimeoutRef = useRef<number | null>(null);
-  const textFadeTimeoutRef = useRef<number | null>(null);
+  const manualControlTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Watchlist store methods moved to StandardizedFavoriteButton component
 
@@ -138,12 +138,13 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
       // Clear text fade timeout
       if (textFadeTimeoutRef.current) {
         clearTimeout(textFadeTimeoutRef.current);
+        textFadeTimeoutRef.current = null;
       }
       
       const currentContent = filmography[expandedSection][currentSlide];
       
       // Start trailer for first slide after 5 seconds (only if autoplay is enabled)
-      if (effectiveTheme.autoplayVideos && currentContent && trailerKeys[currentContent.id]) {
+      if (themeSettings.autoplayVideos && currentContent && trailerKeys[currentContent.id]) {
         timeoutRefs.current[currentContent.id] = setTimeout(() => {
           openTrailer({ 
             videoKey: trailerKeys[currentContent.id], 
@@ -201,7 +202,7 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
     }
 
     // Start new trailer after showing cover content for 5 seconds (only if autoplay is enabled)
-    if (effectiveTheme.autoplayVideos && newContent?.id && trailerKeys[newContent.id]) {
+    if (themeSettings.autoplayVideos && newContent?.id && trailerKeys[newContent.id]) {
       if (timeoutRefs.current[newContent.id]) {
         clearTimeout(timeoutRefs.current[newContent.id]);
       }

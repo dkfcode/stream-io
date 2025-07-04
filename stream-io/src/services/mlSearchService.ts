@@ -4,8 +4,8 @@
  */
 
 import { handleAsyncError } from './errorHandler';
-import { searchContent, getContentByPerson, getGenreContent } from './tmdb';
-import type { SearchResult } from '../types/tmdb';
+import { searchContent, getContentByPerson, getGenreContent, searchPeople } from './tmdb';
+import type { SearchResult, PersonResult } from '../types/tmdb';
 
 // Enhanced search result with ML confidence scores
 export interface MLSearchResult {
@@ -22,6 +22,13 @@ export interface MLSearchResult {
   };
   processingTime: number;
   modelUsed: string;
+}
+
+// Search options for ML search
+export interface MLSearchOptions {
+  includePersonContent?: boolean;
+  maxResults?: number;
+  useFallback?: boolean;
 }
 
 // AI Configuration
@@ -49,11 +56,12 @@ interface SemanticEmbedding {
 }
 
 interface QueryAnalysis {
-  intent: 'search_specific' | 'discover_similar' | 'mood_based' | 'recommendation' | 'comparison';
+  intent: 'search_specific' | 'discover_similar' | 'mood_based' | 'recommendation' | 'comparison' | 'actor_search';
   entities: Array<{
     type: 'person' | 'genre' | 'year' | 'mood' | 'theme';
     value: string;
     confidence: number;
+    id?: number; // For person entities, store the TMDB ID
   }>;
   mood?: {
     primary: string;
@@ -62,6 +70,7 @@ interface QueryAnalysis {
   };
   complexity: 'simple' | 'moderate' | 'complex';
   requires_reasoning: boolean;
+  personFocus?: boolean; // Whether the query is primarily about actors/people
 }
 
 class MLSearchService {
@@ -76,18 +85,33 @@ class MLSearchService {
   /**
    * Perform ML-powered search with semantic understanding
    */
-  async performMLSearch(query: string): Promise<MLSearchResult> {
+  async performMLSearch(query: string, options: MLSearchOptions = {}): Promise<MLSearchResult> {
+    const {
+      includePersonContent = true,
+      maxResults = 20,
+      useFallback = false
+    } = options;
+
     const startTime = Date.now();
     
     try {
+      if (useFallback) {
+        return this.fallbackSearch(query, maxResults);
+      }
+
       // Step 1: Analyze query with AI
-      const queryAnalysis = await this.analyzeQuery(query);
+      const queryAnalysis = await this.analyzeQuery(query, includePersonContent);
       
       // Step 2: Generate semantic embeddings
       const queryEmbedding = await this.generateEmbedding(query);
       
       // Step 3: Execute search strategy based on AI analysis
-      const searchResults = await this.executeIntelligentSearch(query, queryAnalysis, queryEmbedding);
+      const searchResults = await this.executeIntelligentSearch(
+        query, 
+        queryAnalysis, 
+        queryEmbedding, 
+        { includePersonContent, maxResults }
+      );
       
       // Step 4: Post-process results with AI insights
       const enhancedResults = await this.enhanceResultsWithAI(searchResults, queryAnalysis, query);
@@ -102,7 +126,7 @@ class MLSearchService {
         interpretation: queryAnalysis.complexity === 'complex' 
           ? await this.generateInterpretation(query, queryAnalysis)
           : this.generateSimpleInterpretation(queryAnalysis),
-        results: enhancedResults,
+        results: enhancedResults.slice(0, maxResults),
         searchStrategy: this.getStrategyDescription(queryAnalysis),
         confidence: this.calculateOverallConfidence(queryAnalysis, enhancedResults),
         aiInsights,
@@ -117,29 +141,29 @@ class MLSearchService {
       });
       
       // Fallback to traditional search
-      return this.fallbackSearch(query);
+      return this.fallbackSearch(query, maxResults);
     }
   }
 
   /**
    * Advanced query analysis using AI
    */
-  private async analyzeQuery(query: string): Promise<QueryAnalysis> {
+  private async analyzeQuery(query: string, includePersonContent: boolean = true): Promise<QueryAnalysis> {
     if (!this.apiKeys.openai && !this.apiKeys.anthropic) {
-      return this.fallbackQueryAnalysis(query);
+      return this.fallbackQueryAnalysis(query, includePersonContent);
     }
 
     try {
       const prompt = this.buildAnalysisPrompt(query);
       const analysis = await this.callAIService(prompt, 'analysis');
       
-      return this.parseAIAnalysis(analysis);
+      return this.parseAIAnalysis(analysis, includePersonContent);
     } catch (error) {
       handleAsyncError(error as Error, {
         operation: 'analyzeQuery',
         query
       });
-      return this.fallbackQueryAnalysis(query);
+      return this.fallbackQueryAnalysis(query, includePersonContent);
     }
   }
 
@@ -178,33 +202,76 @@ class MLSearchService {
   private async executeIntelligentSearch(
     query: string, 
     analysis: QueryAnalysis, 
-    embedding: SemanticEmbedding
+    embedding: SemanticEmbedding,
+    options: MLSearchOptions
   ): Promise<SearchResult[]> {
-    const searchStrategies: Promise<SearchResult[]>[] = [];
+    const { includePersonContent = true, maxResults = 20 } = options;
+    const searchStrategies: Array<() => Promise<SearchResult[]>> = [];
 
-    // Strategy 1: Entity-based search
-    const entityResults = this.searchByEntities(analysis.entities);
-    searchStrategies.push(entityResults);
+    // Determine if this is primarily an actor search
+    const isActorFocused = analysis.intent === 'actor_search' || 
+                          analysis.personFocus || 
+                          this.looksLikePersonName(query);
 
-    // Strategy 2: Mood-based search
-    if (analysis.mood) {
-      const moodResults = this.searchByMood(analysis.mood);
-      searchStrategies.push(moodResults);
+    // 1. Always include basic content search as foundation
+    searchStrategies.push(async () => {
+      const basicResults = await searchContent(query);
+      const allocation = isActorFocused ? 0.4 : 0.6; // Reduce content allocation for actor searches
+      return basicResults.slice(0, Math.floor(maxResults * allocation));
+    });
+
+    // 2. Enhanced person search when includePersonContent is true
+    if (includePersonContent) {
+      searchStrategies.push(async () => {
+        console.log('🔍 Executing person search for query:', query);
+        const personResults = await this.searchPeople(query);
+        console.log('👤 Person search results:', personResults.length, 'found');
+        if (personResults.length > 0) {
+          console.log('👤 First person result:', personResults[0]);
+        }
+        // Increase allocation for actor-focused searches
+        const allocation = isActorFocused ? 0.6 : 0.3;
+        return personResults.slice(0, Math.floor(maxResults * allocation));
+      });
     }
 
-    // Strategy 3: Semantic similarity search
-    const semanticResults = this.searchBySemantic(embedding);
-    searchStrategies.push(semanticResults);
+    // 3. Entity-based search (existing functionality)
+    if (analysis.entities.length > 0) {
+      searchStrategies.push(async () => {
+        const entityResults = await this.searchByEntities(analysis.entities, includePersonContent);
+        return entityResults.slice(0, Math.floor(maxResults * 0.4));
+      });
+    }
 
-    // Strategy 4: Traditional text search as baseline
-    const textResults = searchContent(query);
-    searchStrategies.push(textResults);
+    // 4. Mood-based search
+    if (analysis.mood) {
+      searchStrategies.push(async () => {
+        const moodResults = await this.searchByMood(analysis.mood!);
+        return moodResults.slice(0, Math.floor(maxResults * 0.3));
+      });
+    }
+
+    // 5. Semantic search
+    searchStrategies.push(async () => {
+      const semanticResults = await this.searchBySemantic(embedding);
+      return semanticResults.slice(0, Math.floor(maxResults * 0.2));
+    });
 
     // Execute all strategies in parallel
-    const allResults = await Promise.all(searchStrategies);
+    const resultSets = await Promise.all(
+      searchStrategies.map(strategy => 
+        strategy().catch(error => {
+          console.warn('Search strategy failed:', error);
+          return [];
+        })
+      )
+    );
+
+    // Merge and rank results
+    const finalResults = this.mergeAndRankResults(resultSets, analysis, embedding);
     
-    // Merge and rank results using ML scoring
-    return this.mergeAndRankResults(allResults, analysis, embedding);
+    // Return up to maxResults
+    return finalResults.slice(0, maxResults);
   }
 
   /**
@@ -403,26 +470,99 @@ Be helpful and insightful but concise.`;
   }
 
   // Search Strategy Methods
-  private async searchByEntities(entities: QueryAnalysis['entities']): Promise<SearchResult[]> {
+  /**
+   * Enhanced search by entities with proper person search support
+   */
+  private async searchByEntities(entities: QueryAnalysis['entities'], includePersonContent: boolean): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
     
     for (const entity of entities) {
-      if (entity.confidence > 0.7) {
+      if (entity.confidence > 0.6) {
         try {
-          if (entity.type === 'person') {
-            const personResults = await getContentByPerson(entity.value);
-            results.push(...personResults);
+          if (entity.type === 'person' && includePersonContent) {
+            if (entity.id) {
+              // If we have a person ID, get their filmography
+              const personResults = await getContentByPerson(entity.id);
+              results.push(...personResults);
+            } else {
+              // If we only have a name, search for the person first
+              const people = await searchPeople(entity.value);
+              
+              // Convert PersonResult to SearchResult format and add person results
+              const personSearchResults: SearchResult[] = people.map(person => ({
+                id: person.id,
+                name: person.name,
+                profile_path: person.profile_path,
+                media_type: 'person' as const,
+                known_for_department: person.known_for_department,
+                known_for: person.known_for,
+                popularity: person.popularity,
+                adult: false,
+                poster_path: null,
+                title: undefined,
+                release_date: undefined,
+                first_air_date: undefined,
+                vote_average: undefined,
+                vote_count: undefined,
+                overview: undefined
+              }));
+              
+              results.push(...personSearchResults);
+              
+              // Also get filmography for the top person result
+              if (people.length > 0 && people[0].id) {
+                const filmography = await getContentByPerson(people[0].id);
+                results.push(...filmography.slice(0, 5)); // Limit filmography results
+              }
+            }
           } else if (entity.type === 'genre') {
             const genreResults = await getGenreContent(entity.value);
             results.push(...genreResults);
           }
-        } catch {
+        } catch (error) {
+          console.warn(`Failed to search for entity: ${entity.value}`, error);
           // Continue with other entities
         }
       }
     }
     
     return results;
+  }
+
+  /**
+   * Enhanced people search function
+   */
+  private async searchPeople(query: string): Promise<SearchResult[]> {
+    try {
+      console.log('🔍 ML Search: searchPeople called with query:', query);
+      const people = await searchPeople(query);
+      console.log('👤 TMDB searchPeople returned:', people.length, 'results');
+      
+      // Convert PersonResult to SearchResult format
+      const searchResults = people.map(person => ({
+        id: person.id,
+        name: person.name,
+        profile_path: person.profile_path,
+        media_type: 'person' as const,
+        known_for_department: person.known_for_department,
+        known_for: person.known_for,
+        popularity: person.popularity,
+        adult: false,
+        poster_path: null,
+        title: undefined,
+        release_date: undefined,
+        first_air_date: undefined,
+        vote_average: undefined,
+        vote_count: undefined,
+        overview: undefined
+      }));
+      
+      console.log('👤 Converted to SearchResult format:', searchResults.length, 'results');
+      return searchResults;
+    } catch (error) {
+      console.warn('❌ Failed to search people:', error);
+      return [];
+    }
   }
 
   private async searchByMood(mood: NonNullable<QueryAnalysis['mood']>): Promise<SearchResult[]> {
@@ -500,22 +640,27 @@ Be helpful and insightful but concise.`;
 
   private getStrategyWeight(strategyIndex: number, analysis: QueryAnalysis): number {
     // Weight strategies based on query analysis
-    const weights = [1.0, 0.8, 0.6, 0.4]; // entity, mood, semantic, text
+    const weights = [1.0, 0.8, 0.9, 0.6, 0.4]; // entity, mood, person, semantic, text
     
     if (analysis.intent === 'mood_based' && strategyIndex === 1) {
       return 1.2; // Boost mood-based search for mood queries
+    }
+
+    if (analysis.intent === 'actor_search' && strategyIndex === 2) {
+      return 1.3; // Boost person search for actor queries
     }
     
     return weights[strategyIndex] || 0.4;
   }
 
   // Fallback Methods
-  private fallbackQueryAnalysis(query: string): QueryAnalysis {
+  private fallbackQueryAnalysis(query: string, includePersonContent: boolean = true): QueryAnalysis {
     const lowerQuery = query.toLowerCase();
     
     // Simple heuristic-based analysis
     const entities: QueryAnalysis['entities'] = [];
     let intent: QueryAnalysis['intent'] = 'search_specific';
+    let personFocus = false;
     
     // Check for mood words
     const moodWords = ['funny', 'scary', 'sad', 'romantic', 'exciting'];
@@ -529,12 +674,38 @@ Be helpful and insightful but concise.`;
     if (lowerQuery.includes('recommend') || lowerQuery.includes('suggest')) {
       intent = 'recommendation';
     }
+
+    // Enhanced actor/person detection
+    if (includePersonContent) {
+      const actorKeywords = [
+        'actor', 'actress', 'starring', 'with ', 'stars', 'cast',
+        'played by', 'performance by', 'role by'
+      ];
+      
+      const hasActorKeywords = actorKeywords.some(keyword => lowerQuery.includes(keyword));
+      const looksLikeName = this.looksLikePersonName(query);
+      
+      if (hasActorKeywords || looksLikeName) {
+        intent = 'actor_search';
+        personFocus = true;
+        
+        // If it looks like a name, add it as a person entity
+        if (looksLikeName) {
+          entities.push({
+            type: 'person',
+            value: query.trim(),
+            confidence: 0.8
+          });
+        }
+      }
+    }
     
     return {
       intent,
       entities,
       complexity: query.split(' ').length > 5 ? 'complex' : 'simple',
-      requires_reasoning: intent === 'recommendation' || intent === 'comparison'
+      requires_reasoning: intent === 'recommendation' || intent === 'actor_search',
+      personFocus
     };
   }
 
@@ -555,13 +726,13 @@ Be helpful and insightful but concise.`;
     };
   }
 
-  private async fallbackSearch(query: string): Promise<MLSearchResult> {
+  private async fallbackSearch(query: string, maxResults: number): Promise<MLSearchResult> {
     const results = await searchContent(query);
     
     return {
       query,
       interpretation: `Searching for: ${query}`,
-      results,
+      results: results.slice(0, maxResults),
       searchStrategy: 'traditional_text_search',
       confidence: 0.6,
       aiInsights: {
@@ -580,10 +751,15 @@ Be helpful and insightful but concise.`;
     analysis: QueryAnalysis, 
     results: SearchResult[]
   ): MLSearchResult['aiInsights'] {
+    const resultTitles = results
+      .slice(0, 3)
+      .map(r => r.title || r.name)
+      .filter((title): title is string => !!title);
+
     return {
       queryIntent: analysis.intent,
       semanticAnalysis: `Query appears to be ${analysis.complexity} with ${analysis.entities.length} entities identified`,
-      recommendations: results.slice(0, 3).map(r => r.title),
+      recommendations: resultTitles,
       alternativeQueries: this.generateAlternativeQueries(query)
     };
   }
@@ -607,32 +783,39 @@ Be helpful and insightful but concise.`;
   }
 
   private generateAlternativeQueries(query: string): string[] {
-    // Simple alternative query generation
+    const words = query.toLowerCase().split(/\s+/);
     const alternatives: string[] = [];
     
-    if (query.includes('movie')) {
-      alternatives.push(query.replace('movie', 'film'));
+    // Generate some simple alternative queries
+    if (words.length > 1) {
+      alternatives.push(words.slice(0, -1).join(' '));
+      alternatives.push(words.slice(1).join(' '));
     }
     
-    if (query.includes('show')) {
-      alternatives.push(query.replace('show', 'series'));
-    }
+    alternatives.push(`${query} movie`);
+    alternatives.push(`${query} tv show`);
     
-    return alternatives.slice(0, 3);
+    return alternatives.slice(0, 4);
   }
 
   private calculateOverallConfidence(analysis: QueryAnalysis, results: SearchResult[]): number {
-    let confidence = 0.5;
+    let confidence = 0.5; // Base confidence
     
+    // Boost confidence based on analysis quality
     if (analysis.entities.length > 0) {
       confidence += 0.2;
     }
     
+    if (analysis.requires_reasoning) {
+      confidence += 0.1;
+    }
+    
+    // Boost confidence based on result quality
     if (results.length > 0) {
       confidence += 0.2;
     }
     
-    if (analysis.complexity === 'simple') {
+    if (results.length > 10) {
       confidence += 0.1;
     }
     
@@ -640,44 +823,39 @@ Be helpful and insightful but concise.`;
   }
 
   private getModelUsed(): string {
-    if (this.apiKeys.openai) return 'OpenAI GPT-4 + Embeddings';
-    if (this.apiKeys.anthropic) return 'Anthropic Claude';
-    return 'Fallback Pattern Matching';
+    if (this.apiKeys.openai) return 'openai-gpt-4';
+    if (this.apiKeys.anthropic) return 'anthropic-claude-3';
+    return 'fallback-heuristic';
   }
 
   private getStrategyDescription(analysis: QueryAnalysis): string {
-    const strategies = [];
-    
-    if (analysis.entities.length > 0) strategies.push('entity-based');
-    if (analysis.mood) strategies.push('mood-based');
-    strategies.push('semantic-similarity');
-    strategies.push('text-matching');
-    
-    return `Multi-strategy search: ${strategies.join(', ')}`;
+    const strategies = ['entity-based', 'mood-based', 'person-focused', 'semantic', 'text-based'];
+    return `Multi-strategy search using: ${strategies.slice(0, 3).join(', ')}`;
   }
 
   private generateSimpleInterpretation(analysis: QueryAnalysis): string {
-    return `Looking for ${analysis.intent.replace('_', ' ')} content`;
+    return `Understanding query as ${analysis.intent.replace('_', ' ')} search`;
   }
 
   private async generateInterpretation(query: string, analysis: QueryAnalysis): Promise<string> {
-    if (this.apiKeys.openai || this.apiKeys.anthropic) {
-      const prompt = `Explain what the user is looking for in this search: "${query}"`;
-      try {
-        return await this.callAIService(prompt, 'insights');
-      } catch {
-        return this.generateSimpleInterpretation(analysis);
-      }
+    try {
+      const prompt = `Interpret this search query for a movie/TV database: "${query}". What is the user looking for?`;
+      return await this.callAIService(prompt, 'insights');
+    } catch {
+      return this.generateSimpleInterpretation(analysis);
     }
-    return this.generateSimpleInterpretation(analysis);
   }
 
-  private parseAIAnalysis(analysis: string): QueryAnalysis {
+  private parseAIAnalysis(analysis: string, includePersonContent: boolean = true): QueryAnalysis {
     try {
-      return JSON.parse(analysis);
+      const parsed = JSON.parse(analysis);
+      return {
+        ...parsed,
+        personFocus: includePersonContent && (parsed.personFocus || false)
+      };
     } catch {
       // Fallback parsing
-      return this.fallbackQueryAnalysis(analysis);
+      return this.fallbackQueryAnalysis(analysis, includePersonContent);
     }
   }
 
@@ -685,10 +863,9 @@ Be helpful and insightful but concise.`;
     try {
       return JSON.parse(insights);
     } catch {
-      // Parse as plain text
       return {
         queryIntent: 'search_specific',
-        semanticAnalysis: insights.substring(0, 200),
+        semanticAnalysis: 'Unable to parse AI insights',
         recommendations: [],
         alternativeQueries: []
       };
@@ -698,8 +875,43 @@ Be helpful and insightful but concise.`;
   private async enhanceBatch(
     batch: SearchResult[]
   ): Promise<SearchResult[]> {
-    // Enhance each result in the batch
-    return batch; // For now, return as-is
+    // For now, return as-is
+    // In a full implementation, this would enhance results with additional metadata
+    return batch;
+  }
+
+  // Helper method to detect if query looks like a person name
+  private looksLikePersonName(query: string): boolean {
+    const cleaned = query.trim().toLowerCase();
+    const words = cleaned.split(/\s+/);
+    
+    // Single word that looks like a name (capitalized, common names)
+    if (words.length === 1 && words[0].length >= 3) {
+      const commonNames = [
+        'michael', 'chris', 'ryan', 'matt', 'john', 'james', 'robert', 'david',
+        'jennifer', 'sarah', 'emma', 'olivia', 'sophia', 'emily', 'ava',
+        'will', 'tom', 'brad', 'leo', 'leonardo', 'scarlett', 'anne', 'julia'
+      ];
+      return commonNames.includes(words[0]);
+    }
+    
+    // Multiple words that could be first/last name pattern
+    if (words.length >= 2 && words.length <= 4) {
+      // Check if it contains common actor name patterns
+      const fullName = words.join(' ');
+      
+      // Common actor name patterns
+      const actorPatterns = [
+        /^[a-z]+ [a-z]+$/,                    // "first last"
+        /^[a-z]+ [a-z]\. [a-z]+$/,           // "first m. last"
+        /^[a-z]+ [a-z] [a-z]+$/,             // "first m last"
+        /^[a-z]+ [a-z]+ [a-z]+$/             // "first middle last"
+      ];
+      
+      return actorPatterns.some(pattern => pattern.test(fullName));
+    }
+    
+    return false;
   }
 }
 

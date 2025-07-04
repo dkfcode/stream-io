@@ -879,7 +879,43 @@ export const searchContentEnhanced = async (query: string): Promise<SearchResult
       }
     });
     
-    return response.data.results.filter((item: SearchResult) => item.media_type !== 'person');
+    return response.data.results
+      .filter((item: SearchResult) => {
+        // Exclude person results
+        if (item.media_type === 'person') {
+          return false;
+        }
+        
+        // Must have poster_path for visual display
+        if (!item.poster_path) {
+          return false;
+        }
+        
+        // Must have title or name
+        const title = item.title || item.name;
+        if (!title || title.trim().length < 2) {
+          return false;
+        }
+        
+        // Remove obvious test/placeholder titles
+        const titleLower = title.toLowerCase().trim();
+        if (titleLower === 'test' || titleLower === 'unknown' || titleLower === 'n/a' || titleLower === 'tbd') {
+          return false;
+        }
+        
+        // Basic popularity threshold
+        if (item.popularity !== undefined && item.popularity < 0.1) {
+          return false;
+        }
+        
+        // Must have a valid ID
+        if (!item.id || item.id <= 0) {
+          return false;
+        }
+        
+        return true;
+      })
+      .sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0)); // Sort by popularity
   } catch {
     return [];
   }
@@ -1118,6 +1154,223 @@ export const searchContent = async (query: string): Promise<SearchResult[]> => {
     return [];
   }
 };
+
+// Search for people/actors with enhanced matching
+export const searchPeople = async (query: string): Promise<PersonResult[]> => {
+  try {
+    if (!query.trim()) return [];
+    
+    // Check if TMDB token is available
+    const token = TMDB_API_CONFIG.ACCESS_TOKEN;
+    if (!token) {
+      console.warn('⚠️ TMDB API unavailable - token not configured');
+      return [];
+    }
+    
+    const searchVariations = generateSearchVariations(query);
+    console.log('🔍 Searching people with variations:', searchVariations);
+    
+    const allResults: PersonResult[] = [];
+    const seenIds = new Set<number>();
+    
+    // Try each search variation
+    for (const searchQuery of searchVariations) {
+      try {
+        const response = await getApiClient().get('/search/person', {
+          params: {
+            query: searchQuery,
+            include_adult: false,
+            language: 'en-US',
+            page: 1
+          },
+        });
+
+        const results = response.data.results
+          .filter((person: any) => {
+            // Skip if already seen
+            if (seenIds.has(person.id)) return false;
+            
+            // Basic existence checks
+            if (!person.known_for_department || !person.known_for || person.known_for.length === 0) {
+              return false;
+            }
+            
+            // Name quality checks
+            if (!person.name || person.name.trim().length < 2) {
+              return false;
+            }
+            
+            // Remove obvious test/placeholder names
+            const name = person.name.toLowerCase().trim();
+            if (name === 'test' || name === 'unknown' || name === 'n/a' || name === 'tbd') {
+              return false;
+            }
+            
+            // Popularity threshold - filter out very low popularity actors
+            if (!person.popularity || person.popularity < 0.5) {
+              return false;
+            }
+            
+            // Check for meaningful known_for content
+            const validKnownFor = person.known_for.filter((item: any) => 
+              item && (item.title || item.name) && item.poster_path
+            );
+            
+            if (validKnownFor.length === 0) {
+              return false;
+            }
+            
+            return true;
+          })
+          .map((person: any) => ({
+            id: person.id,
+            name: person.name,
+            profile_path: person.profile_path,
+            known_for_department: person.known_for_department,
+            known_for: person.known_for.map((item: any) => ({
+              ...item,
+              media_type: item.media_type || (item.title ? 'movie' : 'tv')
+            })),
+            popularity: person.popularity
+          }));
+        
+        // Add new results
+        results.forEach((person: PersonResult) => {
+          if (!seenIds.has(person.id)) {
+            seenIds.add(person.id);
+            allResults.push(person);
+          }
+        });
+        
+      } catch (error) {
+        console.warn(`Failed to search people for variation: ${searchQuery}`, error);
+        continue; // Try next variation
+      }
+    }
+    
+    // Score results based on name similarity to original query
+    const scoredResults = allResults.map(person => ({
+      ...person,
+      _searchScore: calculateNameSimilarityScore(person.name, query) + (person.popularity || 0) * 0.1
+    }));
+    
+    return scoredResults
+      .sort((a: any, b: any) => b._searchScore - a._searchScore) // Sort by search score
+      .slice(0, 12); // Return top 12 results
+      
+  } catch (error) {
+    console.warn(`Failed to search people for query: ${query}`, error);
+    return [];
+  }
+};
+
+// Helper function to generate search variations for better name matching
+function generateSearchVariations(query: string): string[] {
+  const variations = [query]; // Start with original query
+  const cleaned = query.trim().toLowerCase();
+  
+  // Handle common name patterns
+  const words = cleaned.split(/\s+/).filter(word => word.length > 0);
+  
+  if (words.length >= 2) {
+    // For names like "micheal b jordan", try:
+    
+    // 1. Correct common misspellings
+    const corrected = query
+      .replace(/micheal/gi, 'michael')
+      .replace(/machael/gi, 'michael')
+      .replace(/michal/gi, 'michael')
+      .replace(/cristian/gi, 'christian')
+      .replace(/christan/gi, 'christian');
+    
+    if (corrected !== query) {
+      variations.push(corrected);
+    }
+    
+    // 2. Try first and last name only (skip middle initial)
+    if (words.length === 3 && words[1].length === 1) {
+      // "michael b jordan" → "michael jordan"
+      variations.push(`${words[0]} ${words[2]}`);
+    }
+    
+    // 3. Try with different spacing for middle initials
+    if (words.length === 3 && words[1].length === 1) {
+      // "michael b jordan" → "michael b. jordan"
+      variations.push(`${words[0]} ${words[1]}. ${words[2]}`);
+    }
+    
+    // 4. Try partial matches (first two words, last two words)
+    if (words.length >= 3) {
+      variations.push(`${words[0]} ${words[1]}`); // First two words
+      variations.push(`${words[words.length - 2]} ${words[words.length - 1]}`); // Last two words
+    }
+    
+    // 5. Try just first name for very partial searches
+    if (words[0].length >= 3) {
+      variations.push(words[0]);
+    }
+    
+    // 6. Try with quotes for exact phrase matching
+    variations.push(`"${query}"`);
+  }
+  
+  // Remove duplicates and return
+  return [...new Set(variations)].slice(0, 5); // Limit to 5 variations to avoid too many API calls
+}
+
+// Helper function to calculate name similarity score
+function calculateNameSimilarityScore(name: string, query: string): number {
+  const nameLower = name.toLowerCase();
+  const queryLower = query.toLowerCase();
+  
+  // Exact match bonus
+  if (nameLower === queryLower) return 100;
+  
+  // Check if query is contained in name
+  if (nameLower.includes(queryLower)) return 80;
+  
+  // Check if name is contained in query (for longer search terms)
+  if (queryLower.includes(nameLower)) return 75;
+  
+  // Word-based matching
+  const nameWords = nameLower.split(/\s+/);
+  const queryWords = queryLower.split(/\s+/);
+  
+  let matchingWords = 0;
+  let totalWords = Math.max(nameWords.length, queryWords.length);
+  
+  queryWords.forEach(queryWord => {
+    if (nameWords.some(nameWord => 
+      nameWord.includes(queryWord) || queryWord.includes(nameWord) || 
+      levenshteinDistance(nameWord, queryWord) <= 1
+    )) {
+      matchingWords++;
+    }
+  });
+  
+  return (matchingWords / totalWords) * 60;
+}
+
+// Simple Levenshtein distance for fuzzy matching
+function levenshteinDistance(str1: string, str2: string): number {
+  const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+  
+  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+  
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,     // deletion
+        matrix[j - 1][i] + 1,     // insertion
+        matrix[j - 1][i - 1] + indicator // substitution
+      );
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+}
 
 export const getTrending = async (mediaType: 'movie' | 'tv'): Promise<SearchResult[]> => {
   try {
