@@ -93,7 +93,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   componentId = 'standardizedSection'
 }) => {
   const { themeSettings } = useTheme();
-  const { openTrailer, closeTrailer, isOpen: isTrailerActive } = useTrailer();
+  const { openTrailer, closeTrailer, isOpen: isTrailerOpen, trailerKey } = useTrailer();
   const { isOpen: isModalOpen } = useModal();
   const { isSectionExpanded, expandSection } = useSectionExpansion();
   
@@ -126,6 +126,11 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   // Hero mode current item
   const currentHeroItem = enableHeroMode && actualIsExpanded && displayItems.length > 0 ? displayItems[currentSlide] : null;
 
+  // Function to check if a specific trailer is active
+  const isTrailerActive = (componentId: string, itemId: number) => {
+    return isTrailerOpen && trailerKey === trailerKeys[itemId];
+  };
+
   // Initialize trailer functionality when expanded with hero mode
   useEffect(() => {
     if (actualIsExpanded && enableHeroMode && currentHeroItem && Object.keys(trailerKeys).length > 0) {
@@ -149,10 +154,12 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
       // Start trailer for current hero item after 5 seconds when expanded (only if autoplay is enabled)
       if (themeSettings.autoplayVideos && trailerKeys[currentHeroItem.id]) {
         timeoutRefs.current[currentHeroItem.id] = setTimeout(() => {
-          openTrailer({ 
-            videoKey: trailerKeys[currentHeroItem.id], 
-            title: currentHeroItem.title || currentHeroItem.name || 'Unknown' 
-          });
+          const mediaType = currentHeroItem.media_type === 'tv' ? 'tv' : 'movie';
+          openTrailer(
+            trailerKeys[currentHeroItem.id], 
+            currentHeroItem.title || currentHeroItem.name || 'Unknown',
+            mediaType
+          );
         }, 5000); // Show cover content for 5 seconds before starting trailer
       }
       
@@ -216,10 +223,12 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
         }
         
         timeoutRefs.current[currentHeroItem.id] = setTimeout(() => {
-          openTrailer({ 
-            videoKey: trailerKeys[currentHeroItem.id], 
-            title: currentHeroItem.title || currentHeroItem.name || 'Unknown' 
-          });
+          const mediaType = currentHeroItem.media_type === 'tv' ? 'tv' : 'movie';
+          openTrailer(
+            trailerKeys[currentHeroItem.id], 
+            currentHeroItem.title || currentHeroItem.name || 'Unknown',
+            mediaType
+          );
         }, 5000);
       }
     }
@@ -324,7 +333,6 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
     if (onToggleMute) {
       onToggleMute();
     }
-    setIframeKey(prev => prev + 1);
   };
 
   if (isLoading) {
