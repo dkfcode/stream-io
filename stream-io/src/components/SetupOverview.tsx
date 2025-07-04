@@ -5,6 +5,7 @@ import { GENRES } from '../constants/genres';
 import { STREAMING_SERVICES } from '../constants/streamingServices';
 import { TV_PROVIDERS } from '../data/tvProviders';
 import { BROADCAST_TYPES } from '../constants/broadcastTypes';
+import BoltBadge from './shared/BoltBadge';
 
 interface SetupOverviewProps {
   onNext: () => void;
@@ -380,6 +381,9 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
           </button>
         </div>
       </div>
+      
+      {/* Bolt Badge */}
+      <BoltBadge />
     </div>
   );
 };

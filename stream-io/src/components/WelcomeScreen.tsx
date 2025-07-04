@@ -3,6 +3,7 @@ import { usePreferences } from '../stores';
 import { GENRES } from '../constants/genres';
 import { STREAMING_SERVICES } from '../constants/streamingServices';
 import { TV_PROVIDERS } from '../data/tvProviders';
+import BoltBadge from './shared/BoltBadge';
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -405,6 +406,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onGetStarted }) => {
       {/* Subtle gradient overlays for depth */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/20 to-transparent pointer-events-none"></div>
+      
+      {/* Bolt Badge */}
+      <BoltBadge />
     </div>
   );
 };

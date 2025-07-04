@@ -11,12 +11,12 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   const { t } = useI18n();
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-toolbar border-t toolbar-height z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-toolbar border-t toolbar-height z-50 safe-area-inset-bottom">
       <div className="container mx-auto px-6 h-full">
         <div className="flex justify-around items-center h-full">
           <button 
             onClick={() => onTabChange('home')}
-            className={`flex flex-col items-center space-y-0.5 px-3 py-1 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
               activeTab === 'home' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -27,7 +27,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
           <button 
             onClick={() => onTabChange('live')}
-            className={`flex flex-col items-center space-y-0.5 px-3 py-1 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
               activeTab === 'live' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -38,7 +38,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
           <button 
             onClick={() => onTabChange('watchlist')}
-            className={`flex flex-col items-center space-y-0.5 px-3 py-1 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
               activeTab === 'watchlist' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -49,7 +49,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
           <button 
             onClick={() => onTabChange('remote')}
-            className={`flex flex-col items-center space-y-0.5 px-3 py-1 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
               activeTab === 'remote' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'

@@ -518,7 +518,7 @@ function App() {
           </main>
 
           {/* Navigation */}
-          <footer className="bg-black/90 backdrop-blur-sm border-t border-purple-500/20">
+          <footer className="bg-black/90 backdrop-blur-sm border-t border-purple-500/20 safe-area-inset-bottom">
             <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
           </footer>
         </div>
