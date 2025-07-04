@@ -19,6 +19,8 @@ interface UserPreferences {
   preferredAudioLanguage: string;
   preferredSubtitles: string;
   interfaceDensity: 'compact' | 'standard' | 'spacious';
+  // View mode preferences
+  preferredViewMode: 'grid' | 'list';
   created_at?: string;
   updated_at?: string;
 }
@@ -56,6 +58,9 @@ interface PreferencesState {
   // Theme setting updates
   updateThemeSetting: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => void;
   
+  // View mode management
+  setPreferredViewMode: (viewMode: 'grid' | 'list') => void;
+  
   // Computed getters
   getPreferenceValue: <K extends keyof UserPreferences>(key: K) => UserPreferences[K];
   isGenreSelected: (genreId: string) => boolean;
@@ -76,6 +81,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   preferredAudioLanguage: 'en',
   preferredSubtitles: 'off',
   interfaceDensity: 'standard',
+  preferredViewMode: 'grid',
 };
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -302,6 +308,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       updateThemeSetting: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
         set((state) => {
           state.preferences[key] = value;
+          state.hasUnsavedChanges = true;
+        });
+      },
+
+      // View mode management
+      setPreferredViewMode: (viewMode: 'grid' | 'list') => {
+        set((state) => {
+          state.preferences.preferredViewMode = viewMode;
           state.hasUnsavedChanges = true;
         });
       },

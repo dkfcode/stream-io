@@ -55,7 +55,6 @@ const MovieModal: React.FC<MovieModalProps> = ({
   onClose 
 }) => {
   const { themeSettings } = useTheme();
-  const { openModal, closeModal } = useModal();
   const { closeTrailer } = useTrailer();
   const [videos, setVideos] = useState<VideoResult[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -68,17 +67,24 @@ const MovieModal: React.FC<MovieModalProps> = ({
     isInFavorite,
     addToHidden,
     removeFromHidden,
-    isInHidden
+    isInHidden,
+    addToWatchLater,
+    markAsWatched,
+    removeFromWatchlist,
+    isInWatchLater,
+    isInWatched,
+    removeFromWatchLater,
+    removeFromWatched
   } = useWatchlistStore();
 
   // Helper function to convert SearchResult to WatchlistItem structure
   const convertToWatchlistItem = (searchItem: SearchResult) => ({
     tmdb_id: searchItem.id,
-    media_type: searchItem.media_type,
+    media_type: searchItem.media_type as 'movie' | 'tv', // Type assertion since we know it's movie or tv in this context
     title: searchItem.title || searchItem.name || '',
-    poster_path: searchItem.poster_path,
-    release_date: searchItem.release_date || searchItem.first_air_date,
-    rating: searchItem.vote_average,
+    poster_path: searchItem.poster_path || undefined, // Ensure it's undefined, not null
+    release_date: searchItem.release_date || searchItem.first_air_date || undefined,
+    rating: searchItem.vote_average || undefined,
     is_watched: false
   });
   
@@ -120,7 +126,7 @@ const MovieModal: React.FC<MovieModalProps> = ({
       // Component is unmounting - close trailers
       closeTrailer();
     };
-  }, [closeTrailer]);
+  }, []); // Remove closeTrailer from dependencies to prevent infinite loop
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -302,12 +308,16 @@ const MovieModal: React.FC<MovieModalProps> = ({
                   {/* Default Action Buttons */}
                   {/* Favorite Button */}
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      if (isInFavorite(item.id)) {
-                        removeFromFavorite(item.id);
-                      } else {
-                        addToFavorites(convertToWatchlistItem(item));
+                      try {
+                        if (isInFavorite(item.id)) {
+                          await removeFromFavorite(item.id);
+                        } else {
+                          await addToFavorites(convertToWatchlistItem(item));
+                        }
+                      } catch (error) {
+                        console.error('Error managing favorites:', error);
                       }
                     }}
                     className={`flex flex-col items-center justify-center w-16 h-16 rounded-full transition-all duration-200 flex-shrink-0 ${
@@ -323,33 +333,68 @@ const MovieModal: React.FC<MovieModalProps> = ({
 
                   {/* Watch Later Button */}
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      if (isInHidden(item.id)) {
-                        removeFromHidden(item.id);
-                      } else {
-                        addToHidden(item);
+                      try {
+                        if (isInWatchLater(item.id)) {
+                          await removeFromWatchLater(item.id);
+                        } else {
+                          await addToWatchLater(convertToWatchlistItem(item));
+                        }
+                      } catch (error) {
+                        console.error('Error managing watch later:', error);
                       }
                     }}
                     className={`flex flex-col items-center justify-center w-16 h-16 rounded-full transition-all duration-200 flex-shrink-0 ${
-                      isInHidden(item.id)
+                      isInWatchLater(item.id)
                         ? 'bg-purple-600 text-white'
                         : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80'
                     }`}
-                    aria-label={isInHidden(item.id) ? "Unhide Item" : "Hide Item"}
+                    aria-label={isInWatchLater(item.id) ? "Remove from Watch Later" : "Add to Watch Later"}
                   >
-                    <EyeOff className="w-5 h-5 mb-0.5" />
-                    <span className="text-[10px] font-medium text-center leading-tight">Hide</span>
+                    <Bookmark className={`w-5 h-5 mb-0.5 ${isInWatchLater(item.id) ? 'fill-current' : ''}`} />
+                    <span className="text-[10px] font-medium text-center leading-tight">Watch Later</span>
                   </button>
 
                   {/* Watched Already Button */}
                   <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        if (isInWatched(item.id)) {
+                          await removeFromWatched(item.id);
+                        } else {
+                          await markAsWatched(convertToWatchlistItem(item));
+                        }
+                      } catch (error) {
+                        console.error('Error managing watched status:', error);
+                      }
+                    }}
+                    className={`flex flex-col items-center justify-center w-16 h-16 rounded-full transition-all duration-200 flex-shrink-0 ${
+                      isInWatched(item.id)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80'
+                    }`}
+                    aria-label={isInWatched(item.id) ? "Remove from Watched" : "Mark as Watched"}
+                  >
+                    <Check className={`w-5 h-5 mb-0.5 ${isInWatched(item.id) ? 'fill-current' : ''}`} />
+                    <span className="text-[10px] font-medium text-center leading-tight">Watched</span>
+                  </button>
+
+                  {/* Hide Button */}
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (isInHidden(item.id)) {
-                        removeFromHidden(item.id);
-                      } else {
-                        addToHidden(item);
+                      try {
+                        if (isInHidden(item.id)) {
+                          removeFromHidden(item.id);
+                        } else {
+                          addToHidden(item.id);
+                          // Close modal after hiding the item
+                          onClose();
+                        }
+                      } catch (error) {
+                        console.error('Error managing hidden status:', error);
                       }
                     }}
                     className={`flex flex-col items-center justify-center w-16 h-16 rounded-full transition-all duration-200 flex-shrink-0 ${
@@ -365,14 +410,18 @@ const MovieModal: React.FC<MovieModalProps> = ({
                   
                   {/* Custom Lists - Only show lists that already contain this item */}
                   {customUserLists
-                    .filter(list => list.items.some(listItem => listItem.id === item.id))
+                    .filter(list => list.items && list.items.some(listItem => listItem.tmdb_id === item.id))
                     .map((list) => {
                       return (
                         <button
                           key={list.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            removeFromWatchlist(list.id, item.id);
+                            // Find the item in the watchlist and remove it
+                            const watchlistItem = list.items?.find(listItem => listItem.tmdb_id === item.id);
+                            if (watchlistItem) {
+                              removeFromWatchlist(watchlistItem.id);
+                            }
                           }}
                           className="flex flex-col items-center justify-center w-16 h-16 rounded-full transition-all duration-200 flex-shrink-0 bg-purple-600 text-white"
                           aria-label={`Remove from ${list.name}`}

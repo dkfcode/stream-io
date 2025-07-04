@@ -53,11 +53,11 @@ const StandardizedSeeMorePage: React.FC<StandardizedSeeMorePageProps> = ({
   renderListItem,
   toolbarActions
 }) => {
-  const { preferredViewMode, setPreferredViewMode } = usePreferences();
+  const { preferences, setPreferredViewMode } = usePreferences();
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   
   // Use global preferred view mode instead of local state
-  const viewMode = preferredViewMode;
+  const viewMode = preferences.preferredViewMode;
   const setViewMode = setPreferredViewMode;
   
   const viewModeTheme = getViewModeToggleTheme();
@@ -122,34 +122,33 @@ const StandardizedSeeMorePage: React.FC<StandardizedSeeMorePageProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white">
-        <header className="fixed top-0 left-0 right-0 bg-toolbar border-b toolbar-height toolbar-padding z-40">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid items-center gap-4 h-full grid-cols-[auto_1fr_auto]">
-              <div className="flex justify-start">
+        {/* Title Section with Back Button - Covers search bar area */}
+        <div className="bg-black border-b border-gray-800/50 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              {/* Back Button and Title */}
+              <div className="flex items-center space-x-4">
                 <button
                   onClick={onBack}
-                  className="p-2 hover:bg-toolbar-hover rounded-xl transition-colors text-gray-300 hover:text-white"
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-800 rounded-xl transition-colors text-gray-300 hover:text-white"
                   aria-label="Go back"
                 >
-                  <div className="flex items-center space-x-2">
-                    <ArrowLeft className="w-6 h-6" />
-                    <span className="text-sm font-medium">Back</span>
-                  </div>
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="text-sm font-medium">Back</span>
                 </button>
-              </div>
-              
-              <div className="flex justify-center px-4">
-                <h1 className="text-xl font-bold text-white">{title}</h1>
-              </div>
-              
-              <div className="flex justify-end">
-                {/* Empty space for layout */}
+                
+                <div className="h-6 w-px bg-gray-700" /> {/* Separator */}
+                
+                <div>
+                  <h1 className="text-2xl font-bold text-white">{title}</h1>
+                  {headerContent}
+                </div>
               </div>
             </div>
           </div>
-        </header>
+        </div>
 
-        <main className="pt-[calc(60px+1rem)]">
+        <main className="py-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center h-32">
               <div className="text-white text-lg animate-pulse">Loading...</div>
@@ -162,74 +161,67 @@ const StandardizedSeeMorePage: React.FC<StandardizedSeeMorePageProps> = ({
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-toolbar border-b toolbar-height toolbar-padding z-40">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid items-center gap-4 h-full grid-cols-[auto_1fr_auto]">
-            <div className="flex justify-start">
+      {/* Title Section with Back Button - Covers search bar area */}
+      <div className="bg-black border-b border-gray-800/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Back Button and Title */}
+            <div className="flex items-center space-x-4">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-toolbar-hover rounded-xl transition-colors text-gray-300 hover:text-white"
+                className="flex items-center space-x-2 p-2 hover:bg-gray-800 rounded-xl transition-colors text-gray-300 hover:text-white"
                 aria-label="Go back"
               >
-                <div className="flex items-center space-x-2">
-                  <ArrowLeft className="w-6 h-6" />
-                  <span className="text-sm font-medium">Back</span>
-                </div>
+                <ArrowLeft className="w-5 h-5" />
+                <span className="text-sm font-medium">Back</span>
               </button>
-            </div>
-            
-            <div className="flex justify-center px-4">
-              <div className="w-full">
-                <div className="relative">
-                  <div className="w-full py-2 text-center">
-                    <h1 className="text-xl font-bold text-white">{title}</h1>
-                    {headerContent}
-                  </div>
-                </div>
+              
+              <div className="h-6 w-px bg-gray-700" /> {/* Separator */}
+              
+              <div>
+                <h1 className="text-2xl font-bold text-white">{title}</h1>
+                {headerContent}
               </div>
             </div>
             
-            <div className="flex justify-end">
-              {/* Filter dropdown */}
-              {showMediaFilter && onMediaFilterChange && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                    className="flex items-center space-x-2 bg-toolbar-hover hover:bg-toolbar-hover rounded-xl px-4 py-2 text-gray-200 transition-colors border border-gray-800/20"
-                  >
-                    <Filter className="w-5 h-5" />
-                    <span className="hidden sm:inline font-medium">
-                      {mediaFilter === 'all' ? 'All' : mediaFilter === 'movie' ? 'Movies' : 'TV Shows'}
-                    </span>
-                  </button>
-                  
-                  {showFilterDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 bg-toolbar rounded-xl shadow-xl z-50 border overflow-hidden">
-                      <div className="py-2">
-                        {(['all', 'movie', 'tv'] as const).map((filter) => (
-                          <button
-                            key={filter}
-                            onClick={() => handleFilterSelect(filter)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-toolbar-hover transition-colors ${
-                              mediaFilter === filter ? 'text-purple-400' : 'text-gray-200'
-                            }`}
-                          >
-                            {filter === 'all' ? 'All Content' : filter === 'movie' ? 'Movies' : 'TV Shows'}
-                          </button>
-                        ))}
-                      </div>
+            {/* Filter dropdown */}
+            {showMediaFilter && onMediaFilterChange && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 rounded-xl px-4 py-2 text-gray-200 transition-colors border border-gray-700"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="hidden sm:inline font-medium">
+                    {mediaFilter === 'all' ? 'All' : mediaFilter === 'movie' ? 'Movies' : 'TV Shows'}
+                  </span>
+                </button>
+                
+                {showFilterDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-700 overflow-hidden">
+                    <div className="py-2">
+                      {(['all', 'movie', 'tv'] as const).map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => handleFilterSelect(filter)}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-700 transition-colors ${
+                            mediaFilter === filter ? 'text-purple-400' : 'text-gray-200'
+                          }`}
+                        >
+                          {filter === 'all' ? 'All Content' : filter === 'movie' ? 'Movies' : 'TV Shows'}
+                        </button>
+                      ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Content */}
-      <main className="pt-[calc(60px+1rem)]">
+      <main className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Toolbar */}
           <div className="flex justify-between items-center mb-4">
@@ -291,15 +283,8 @@ const StandardizedSeeMorePage: React.FC<StandardizedSeeMorePageProps> = ({
               ) : (
                 // List View
                 <div className="space-y-4">
-                  {filteredItems.map((item) => (
-                    <StandardizedThumbnail
-                      key={item.id}
-                      item={item}
-                      onClick={() => onItemClick(item)}
-                      showOverlay={true}
-                      showRating={true}
-                      showMediaType={true}
-                    />
+                  {filteredItems.map((item, index) => (
+                    renderListItem ? renderListItem(item, index) : renderDefaultListItem(item)
                   ))}
                 </div>
               )}

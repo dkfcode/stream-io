@@ -53,7 +53,7 @@ interface WatchlistState {
   // Recently added tracking
   lastAddedMovie: WatchlistItem | null;
   lastAddedShow: WatchlistItem | null;
-  hiddenItems: Set<number>; // Set of TMDB IDs that are hidden
+  hiddenItems: number[]; // Array of TMDB IDs that are hidden
   
   // Actions
   loadWatchlists: () => Promise<void>;
@@ -78,6 +78,14 @@ interface WatchlistState {
   removeFromFavorite: (tmdbId: number) => Promise<void>;
   isInFavorite: (tmdbId: number) => boolean;
   
+  // Watch Later management
+  isInWatchLater: (tmdbId: number) => boolean;
+  removeFromWatchLater: (tmdbId: number) => Promise<void>;
+  
+  // Watched management
+  isInWatched: (tmdbId: number) => boolean;
+  removeFromWatched: (tmdbId: number) => Promise<void>;
+  
   // Hidden items management
   addToHidden: (tmdbId: number) => void;
   removeFromHidden: (tmdbId: number) => void;
@@ -89,6 +97,7 @@ interface WatchlistState {
   getWatchlistByType: (type: Watchlist['list_type']) => Watchlist | undefined;
   isItemInWatchlist: (tmdbId: number, mediaType: 'movie' | 'tv', watchlistId?: string) => boolean;
   getItemFromWatchlists: (tmdbId: number, mediaType: 'movie' | 'tv') => WatchlistItem | undefined;
+  ensureDefaultWatchlists: () => void;
 }
 
 export const useWatchlistStore = create<WatchlistState>()(
@@ -103,7 +112,46 @@ export const useWatchlistStore = create<WatchlistState>()(
       // Recently added tracking
       lastAddedMovie: null,
       lastAddedShow: null,
-      hiddenItems: new Set(),
+      hiddenItems: [],
+
+      // Helper function to ensure default watchlists exist
+      ensureDefaultWatchlists: () => {
+        const { watchlists } = get();
+        const defaultLists = [
+          { list_type: 'favorites', name: 'Favorite' },
+          { list_type: 'watch_later', name: 'Watch Later' },
+          { list_type: 'watched', name: 'Watched Already' },
+        ] as const;
+
+        let hasChanges = false;
+        const updatedWatchlists = [...watchlists];
+
+        defaultLists.forEach(({ list_type, name }) => {
+          if (!watchlists.find(w => w.list_type === list_type)) {
+            const newList: Watchlist = {
+              id: list_type, // Use list_type as ID for default lists
+              user_id: 'local', // Local user ID
+              name,
+              description: `Default ${name.toLowerCase()} watchlist`,
+              is_default: true,
+              list_type,
+              sort_order: defaultLists.findIndex(l => l.list_type === list_type),
+              is_public: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              items: [],
+            };
+            updatedWatchlists.push(newList);
+            hasChanges = true;
+          }
+        });
+
+        if (hasChanges) {
+          set((state) => {
+            state.watchlists = updatedWatchlists;
+          });
+        }
+      },
 
       // Actions
       loadWatchlists: async () => {
@@ -144,6 +192,7 @@ export const useWatchlistStore = create<WatchlistState>()(
         });
 
         try {
+          // Try to call the backend first
           const response = await authenticatedApiCall('/api/watchlist', {
             method: 'POST',
             body: JSON.stringify({ name, description, is_public: isPublic }),
@@ -159,15 +208,31 @@ export const useWatchlistStore = create<WatchlistState>()(
           smartToast.success(`Created watchlist "${name}"`);
           return newWatchlist;
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to create watchlist';
+          // Backend not available, use local storage fallback
+          console.log('Backend not available, using local storage for watchlist creation');
           
+          const newWatchlist: Watchlist = {
+            id: `local_${Date.now()}_${Math.random()}`, // Generate local ID
+            user_id: 'local',
+            name,
+            description: description || undefined,
+            is_default: false,
+            list_type: 'custom',
+            sort_order: get().watchlists.length,
+            is_public: isPublic,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            items: [],
+          };
+
           set((state) => {
+            state.watchlists.push(newWatchlist);
             state.loading = false;
-            state.error = errorMessage;
+            state.error = null; // Clear any error since we handled it locally
           });
 
-          smartToast.error(errorMessage);
-          throw error;
+          smartToast.success(`Created watchlist "${name}"`);
+          return newWatchlist;
         }
       },
 
@@ -260,6 +325,7 @@ export const useWatchlistStore = create<WatchlistState>()(
         });
 
         try {
+          // Try to call the backend first
           const response = await authenticatedApiCall(`/api/watchlist/${watchlistId}/items`, {
             method: 'POST',
             body: JSON.stringify(item),
@@ -278,27 +344,45 @@ export const useWatchlistStore = create<WatchlistState>()(
 
           smartToast.success(`Added "${item.title}" to watchlist`);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to add to watchlist';
+          // Backend not available, use local storage fallback
+          console.log('Backend not available, using local storage for watchlist');
           
+          const newItem: WatchlistItem = {
+            ...item,
+            id: `local_${Date.now()}_${Math.random()}`, // Generate local ID
+            watchlist_id: watchlistId,
+            added_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
           set((state) => {
+            const watchlist = state.watchlists.find(w => w.id === watchlistId);
+            if (watchlist) {
+              if (!watchlist.items) watchlist.items = [];
+              // Check if item already exists to prevent duplicates
+              const exists = watchlist.items.some(existingItem => 
+                existingItem.tmdb_id === item.tmdb_id && existingItem.media_type === item.media_type
+              );
+              if (!exists) {
+                watchlist.items.push(newItem);
+              }
+            }
             state.loading = false;
-            state.error = errorMessage;
+            state.error = null; // Clear any error since we handled it locally
           });
 
-          smartToast.error(errorMessage);
-          throw error;
+          smartToast.success(`Added "${item.title}" to watchlist`);
         }
       },
 
       removeFromWatchlist: async (itemId: string) => {
-        const item = get().getItemFromWatchlists(0, 'movie'); // Will find by ID internally
-        
         set((state) => {
           state.loading = true;
           state.error = null;
         });
 
         try {
+          // Try to call the backend first
           await authenticatedApiCall(`/api/watchlist/items/${itemId}`, {
             method: 'DELETE',
           });
@@ -314,15 +398,20 @@ export const useWatchlistStore = create<WatchlistState>()(
 
           smartToast.success('Removed from watchlist');
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to remove from watchlist';
+          // Backend not available, use local storage fallback
+          console.log('Backend not available, using local storage for watchlist removal');
           
           set((state) => {
+            state.watchlists.forEach(watchlist => {
+              if (watchlist.items) {
+                watchlist.items = watchlist.items.filter(item => item.id !== itemId);
+              }
+            });
             state.loading = false;
-            state.error = errorMessage;
+            state.error = null; // Clear any error since we handled it locally
           });
 
-          smartToast.error(errorMessage);
-          throw error;
+          smartToast.success('Removed from watchlist');
         }
       },
 
@@ -383,6 +472,9 @@ export const useWatchlistStore = create<WatchlistState>()(
 
       // Quick actions
       addToFavorites: async (item: Omit<WatchlistItem, 'id' | 'watchlist_id' | 'added_at' | 'updated_at'>) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
         const favoritesWatchlist = get().getWatchlistByType('favorites');
         if (favoritesWatchlist) {
           await get().addToWatchlist(favoritesWatchlist.id, item);
@@ -404,6 +496,9 @@ export const useWatchlistStore = create<WatchlistState>()(
       },
 
       addToWatchLater: async (item: Omit<WatchlistItem, 'id' | 'watchlist_id' | 'added_at' | 'updated_at'>) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
         const watchLaterWatchlist = get().getWatchlistByType('watch_later');
         if (watchLaterWatchlist) {
           await get().addToWatchlist(watchLaterWatchlist.id, item);
@@ -420,6 +515,9 @@ export const useWatchlistStore = create<WatchlistState>()(
       },
 
       markAsWatched: async (item: Omit<WatchlistItem, 'id' | 'watchlist_id' | 'added_at' | 'updated_at'>) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
         const watchedWatchlist = get().getWatchlistByType('watched');
         if (watchedWatchlist) {
           await get().addToWatchlist(watchedWatchlist.id, { ...item, is_watched: true, watched_date: new Date().toISOString() });
@@ -437,6 +535,9 @@ export const useWatchlistStore = create<WatchlistState>()(
 
       // Favorites management
       removeFromFavorite: async (tmdbId: number) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
         const favoritesWatchlist = get().getWatchlistByType('favorites');
         if (favoritesWatchlist) {
           const itemToRemove = favoritesWatchlist.items?.find(i => i.tmdb_id === tmdbId);
@@ -447,25 +548,74 @@ export const useWatchlistStore = create<WatchlistState>()(
       },
 
       isInFavorite: (tmdbId: number) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
         const favoritesWatchlist = get().getWatchlistByType('favorites');
         return favoritesWatchlist?.items?.some(i => i.tmdb_id === tmdbId) || false;
+      },
+
+      // Watch Later management
+      isInWatchLater: (tmdbId: number) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
+        const watchLaterWatchlist = get().getWatchlistByType('watch_later');
+        return watchLaterWatchlist?.items?.some(i => i.tmdb_id === tmdbId) || false;
+      },
+
+      removeFromWatchLater: async (tmdbId: number) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
+        const watchLaterWatchlist = get().getWatchlistByType('watch_later');
+        if (watchLaterWatchlist) {
+          const itemToRemove = watchLaterWatchlist.items?.find(i => i.tmdb_id === tmdbId);
+          if (itemToRemove) {
+            await get().removeFromWatchlist(itemToRemove.id);
+          }
+        }
+      },
+
+      // Watched management
+      isInWatched: (tmdbId: number) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
+        const watchedWatchlist = get().getWatchlistByType('watched');
+        return watchedWatchlist?.items?.some(i => i.tmdb_id === tmdbId) || false;
+      },
+
+      removeFromWatched: async (tmdbId: number) => {
+        // Ensure default watchlists exist first
+        get().ensureDefaultWatchlists();
+        
+        const watchedWatchlist = get().getWatchlistByType('watched');
+        if (watchedWatchlist) {
+          const itemToRemove = watchedWatchlist.items?.find(i => i.tmdb_id === tmdbId);
+          if (itemToRemove) {
+            await get().removeFromWatchlist(itemToRemove.id);
+          }
+        }
       },
 
       // Hidden items management
       addToHidden: (tmdbId: number) => {
         set((state) => {
-          state.hiddenItems.add(tmdbId);
+          if (!state.hiddenItems.includes(tmdbId)) {
+            state.hiddenItems.push(tmdbId);
+          }
         });
       },
 
       removeFromHidden: (tmdbId: number) => {
         set((state) => {
-          state.hiddenItems.delete(tmdbId);
+          state.hiddenItems = state.hiddenItems.filter(id => id !== tmdbId);
         });
       },
 
       isInHidden: (tmdbId: number) => {
-        return get().hiddenItems.has(tmdbId);
+        return get().hiddenItems.includes(tmdbId);
       },
 
       // Utility functions
@@ -516,7 +666,7 @@ export const useWatchlistStore = create<WatchlistState>()(
         activeWatchlistId: state.activeWatchlistId,
         lastAddedMovie: state.lastAddedMovie,
         lastAddedShow: state.lastAddedShow,
-        hiddenItems: Array.from(state.hiddenItems), // Convert Set to Array for serialization
+        hiddenItems: state.hiddenItems, // Already an array, no conversion needed
         // Don't persist watchlists as they should be loaded fresh from API
       }),
       merge: (persistedState, currentState) => {
@@ -524,7 +674,7 @@ export const useWatchlistStore = create<WatchlistState>()(
         return {
           ...currentState,
           ...persisted,
-          hiddenItems: new Set(persisted?.hiddenItems || []), // Convert Array back to Set
+          hiddenItems: persisted?.hiddenItems || [], // Already an array, no conversion needed
         };
       },
     }

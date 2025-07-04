@@ -48,7 +48,10 @@ const ContentSection: React.FC<ContentSectionProps> = ({
   const [showSeeMorePage, setShowSeeMorePage] = useState(false);
   const [seeMoreFilter, setSeeMoreFilter] = useState<'all' | 'movie' | 'tv'>('all');
   const [showSeeMoreFilterDropdown, setShowSeeMoreFilterDropdown] = useState(false);
-  const [preferredViewMode, setPreferredViewMode] = useState<'list' | 'grid'>('grid');
+  
+  // Use global view mode preference (preferences already declared above)
+  const { setPreferredViewMode } = usePreferences();
+  const preferredViewMode = preferences.preferredViewMode;
 
   // Hero slideshow state
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -144,13 +147,13 @@ const ContentSection: React.FC<ContentSectionProps> = ({
     }
   };
 
-  // Filter based on selected media type (hidden status temporarily disabled)
+  // Filter based on selected media type and hidden status
   const filteredItems = useMemo(() => {
     console.log('Recomputing filteredItems:', { itemsLength: items.length, selectedFilter });
     
     let filtered = items.filter(item => 
-      (selectedFilter === 'all' || item.media_type === selectedFilter)
-      // TODO: Re-enable hidden item filtering when implemented
+      (selectedFilter === 'all' || item.media_type === selectedFilter) &&
+      !isInHidden(item.id) // Filter out hidden items
     );
 
     // For the main section view, limit to 20 items for performance

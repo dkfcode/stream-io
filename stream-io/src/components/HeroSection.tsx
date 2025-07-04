@@ -107,14 +107,17 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     };
   }, []);
 
-  // Filter content based on selectedFilter
+  // Import hidden items check from watchlist store
+  const { isInHidden } = useWatchlistStore();
+
+  // Filter content based on selectedFilter and hidden status
   useEffect(() => {
-    let filteredContent = allPlatformContent;
+    let filteredContent = allPlatformContent.filter(item => !isInHidden(item.id)); // Filter out hidden items
     
     if (selectedFilter === 'movie') {
-      filteredContent = allPlatformContent.filter(item => item.media_type === 'movie');
+      filteredContent = filteredContent.filter(item => item.media_type === 'movie');
     } else if (selectedFilter === 'tv') {
-      filteredContent = allPlatformContent.filter(item => item.media_type === 'tv');
+      filteredContent = filteredContent.filter(item => item.media_type === 'tv');
     }
     
     setPlatformContent(filteredContent);
@@ -164,7 +167,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         }, 7000);
       }
     }
-  }, [selectedFilter, allPlatformContent, trailerKeys, isTextPermanentlyVisible, isPaused, themeSettings.autoplayVideos]);
+  }, [selectedFilter, allPlatformContent, trailerKeys, isTextPermanentlyVisible, isPaused, themeSettings.autoplayVideos, isInHidden]);
 
   // Auto-advance slides (pause when a section is expanded)
   useEffect(() => {

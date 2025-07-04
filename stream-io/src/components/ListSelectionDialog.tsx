@@ -22,34 +22,62 @@ const ListSelectionDialog: React.FC<ListSelectionDialogProps> = ({
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   
   const { 
-    customLists, 
-    addToList, 
-    removeFromList, 
-    createList, 
-    isInList,
-    getListsContainingItem 
+    watchlists, 
+    addToWatchlist, 
+    removeFromWatchlist, 
+    createWatchlist, 
+    isItemInWatchlist,
+    getItemFromWatchlists 
   } = useWatchlistStore();
 
   if (!isOpen) return null;
 
-  const handleListToggle = (listId: string) => {
-    if (isInList(listId, item.id)) {
-      removeFromList(listId, item.id);
-    } else {
-      addToList(listId, item);
+  // Helper function to convert SearchResult to WatchlistItem structure
+  const convertToWatchlistItem = (searchItem: SearchResult) => ({
+    tmdb_id: searchItem.id,
+    media_type: searchItem.media_type as 'movie' | 'tv',
+    title: searchItem.title || searchItem.name || '',
+    poster_path: searchItem.poster_path || undefined,
+    release_date: searchItem.release_date || searchItem.first_air_date,
+    rating: searchItem.vote_average,
+    is_watched: false
+  });
+
+  const handleListToggle = async (listId: string) => {
+    try {
+      const isInList = isItemInWatchlist(item.id, item.media_type as 'movie' | 'tv', listId);
+      
+      if (isInList) {
+        // Find the item in the watchlist to get its ID
+        const watchlist = watchlists.find(w => w.id === listId);
+        const watchlistItem = watchlist?.items?.find(i => i.tmdb_id === item.id);
+        if (watchlistItem) {
+          await removeFromWatchlist(watchlistItem.id);
+        }
+      } else {
+        await addToWatchlist(listId, convertToWatchlistItem(item));
+      }
+      onItemAdded();
+    } catch (error) {
+      console.error('Error toggling list item:', error);
+      toast.error('Failed to update list');
     }
-    onItemAdded();
   };
 
-  const handleCreateNewList = () => {
+  const handleCreateNewList = async () => {
     if (newListName.trim()) {
-      const listId = createList(newListName.trim());
-      if (listId) { // Only proceed if list was created successfully
-        addToList(listId, item);
-        setNewListName('');
-        setIsCreatingNew(false);
-        onItemAdded();
-        toast.success(`Added to "${newListName.trim()}"`);
+      try {
+        const newWatchlist = await createWatchlist(newListName.trim());
+        if (newWatchlist) {
+          await addToWatchlist(newWatchlist.id, convertToWatchlistItem(item));
+          setNewListName('');
+          setIsCreatingNew(false);
+          onItemAdded();
+          toast.success(`Added to "${newListName.trim()}"`);
+        }
+      } catch (error) {
+        console.error('Error creating new list:', error);
+        toast.error('Failed to create list');
       }
     }
   };
@@ -84,20 +112,15 @@ const ListSelectionDialog: React.FC<ListSelectionDialogProps> = ({
         {/* Lists */}
         <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
           {/* Default Lists First - in specific order */}
-          {customLists
-            .filter(list => list.isDefault ?? false)
+          {watchlists
+            .filter(list => list.is_default)
             .sort((a, b) => {
-              // Ensure Favorite comes first, then Watch Later, then Watched Already
-              if (a.id === 'favorite') return -1;
-              if (b.id === 'favorite') return 1;
-              if (a.id === 'watch-later') return -1;
-              if (b.id === 'watch-later') return 1;
-              if (a.id === 'watched-already') return -1;
-              if (b.id === 'watched-already') return 1;
-              return 0;
+              // Sort by list type for consistent ordering
+              const order = ['favorites', 'watch_later', 'watched', 'custom'];
+              return order.indexOf(a.list_type) - order.indexOf(b.list_type);
             })
             .map((list) => {
-              const isItemInList = isInList(list.id, item.id);
+              const isItemInList = isItemInWatchlist(item.id, item.media_type as 'movie' | 'tv', list.id);
               return (
                 <button
                   key={list.id}
@@ -117,10 +140,10 @@ const ListSelectionDialog: React.FC<ListSelectionDialogProps> = ({
             })}
           
           {/* Custom Lists After Default Lists */}
-          {customLists
-            .filter(list => !(list.isDefault ?? false))
+          {watchlists
+            .filter(list => !list.is_default)
             .map((list) => {
-              const isItemInList = isInList(list.id, item.id);
+              const isItemInList = isItemInWatchlist(item.id, item.media_type as 'movie' | 'tv', list.id);
               return (
                 <button
                   key={list.id}
