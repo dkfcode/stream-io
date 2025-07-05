@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { authenticatedApiCall } from './authStore';
+import { authenticatedApiCall, useAuthStore } from './authStore';
 import { smartToast } from '../utils/toastUtils';
 
 interface UserPreferences {
@@ -10,6 +10,7 @@ interface UserPreferences {
   selected_genres: string[];
   selected_services: string[];
   selected_providers: string[];
+  selected_broadcast_types: string[];
   language: string;
   region: string;
   timezone: string;
@@ -55,6 +56,11 @@ interface PreferencesState {
   removeProvider: (providerId: string) => void;
   toggleProvider: (providerId: string) => void;
   
+  // Broadcast type management
+  addBroadcastType: (broadcastTypeId: string) => void;
+  removeBroadcastType: (broadcastTypeId: string) => void;
+  toggleBroadcastType: (broadcastTypeId: string) => void;
+  
   // Theme setting updates
   updateThemeSetting: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => void;
   
@@ -66,13 +72,35 @@ interface PreferencesState {
   isGenreSelected: (genreId: string) => boolean;
   isServiceSelected: (serviceId: string) => boolean;
   isProviderSelected: (providerId: string) => boolean;
+  isBroadcastTypeSelected: (broadcastTypeId: string) => boolean;
 }
+
+// Helper function to apply UI preferences to HTML element
+const applyUIPreferences = (preferences: UserPreferences) => {
+  const html = document.documentElement;
+  
+  // Apply interface density
+  html.setAttribute('data-density', preferences.interfaceDensity);
+  
+  // Apply language for CSS pseudo-content and direction
+  html.setAttribute('lang', preferences.language);
+  
+  // Apply theme preference
+  html.setAttribute('data-theme', preferences.theme);
+  
+  console.log('✨ Applied UI preferences:', {
+    density: preferences.interfaceDensity,
+    language: preferences.language,
+    theme: preferences.theme
+  });
+};
 
 // Default preferences
 const DEFAULT_PREFERENCES: UserPreferences = {
   selected_genres: [],
   selected_services: [],
   selected_providers: [],
+  selected_broadcast_types: [],
   language: 'en',
   region: 'US',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York',
@@ -109,6 +137,9 @@ export const usePreferencesStore = create<PreferencesState>()(
             state.loading = false;
             state.hasUnsavedChanges = false;
           });
+          
+          // Apply UI preferences to HTML element
+          applyUIPreferences({ ...DEFAULT_PREFERENCES, ...userPreferences });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to load preferences';
           
@@ -118,7 +149,8 @@ export const usePreferencesStore = create<PreferencesState>()(
           });
 
           console.warn('Preferences load failed, using defaults:', errorMessage);
-          // Don't show toast for load failures, just use defaults
+          // Apply default preferences to HTML element
+          applyUIPreferences(DEFAULT_PREFERENCES);
         }
       },
 
@@ -304,12 +336,76 @@ export const usePreferencesStore = create<PreferencesState>()(
         }
       },
 
+      // Broadcast type management
+      addBroadcastType: (broadcastTypeId: string) => {
+        set((state) => {
+          if (!state.preferences.selected_broadcast_types) {
+            state.preferences.selected_broadcast_types = [];
+          }
+          if (!state.preferences.selected_broadcast_types.includes(broadcastTypeId)) {
+            state.preferences.selected_broadcast_types.push(broadcastTypeId);
+            state.hasUnsavedChanges = true;
+          }
+        });
+      },
+
+      removeBroadcastType: (broadcastTypeId: string) => {
+        set((state) => {
+          if (!state.preferences.selected_broadcast_types) {
+            state.preferences.selected_broadcast_types = [];
+            return;
+          }
+          const index = state.preferences.selected_broadcast_types.indexOf(broadcastTypeId);
+          if (index > -1) {
+            state.preferences.selected_broadcast_types.splice(index, 1);
+            state.hasUnsavedChanges = true;
+          }
+        });
+      },
+
+      toggleBroadcastType: (broadcastTypeId: string) => {
+        const { isBroadcastTypeSelected, addBroadcastType, removeBroadcastType } = get();
+        if (isBroadcastTypeSelected(broadcastTypeId)) {
+          removeBroadcastType(broadcastTypeId);
+        } else {
+          addBroadcastType(broadcastTypeId);
+        }
+      },
+
       // Theme setting updates
       updateThemeSetting: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
         set((state) => {
           state.preferences[key] = value;
           state.hasUnsavedChanges = true;
         });
+        
+        // Apply UI preferences to HTML element immediately
+        const currentPreferences = get().preferences;
+        applyUIPreferences(currentPreferences);
+        
+        // Auto-save to localStorage immediately for better UX
+        // The Zustand persist middleware will handle the actual localStorage saving
+        // We just need to make sure the change is persisted
+        
+        // Optional: Try to sync to backend if user is authenticated (non-blocking)
+        setTimeout(async () => {
+          try {
+            // Check if user is authenticated before attempting backend sync
+            const { isAuthenticated } = useAuthStore.getState();
+            if (!isAuthenticated) {
+              console.log('ℹ️ Theme setting saved locally (user not authenticated)');
+              return;
+            }
+
+            const { updatePreferences } = get();
+            const updates = { [key]: value } as Partial<UserPreferences>;
+            await updatePreferences(updates);
+            console.log('✅ Theme setting synced to backend');
+          } catch (error) {
+            // Ignore backend errors - local changes are already saved
+            console.log('ℹ️ Theme setting saved locally (backend sync failed):', error instanceof Error ? error.message : 'Unknown error');
+          }
+        }, 100); // Small delay to avoid blocking UI
       },
 
       // View mode management
@@ -336,6 +432,10 @@ export const usePreferencesStore = create<PreferencesState>()(
       isProviderSelected: (providerId: string): boolean => {
         return get().preferences.selected_providers.includes(providerId);
       },
+
+      isBroadcastTypeSelected: (broadcastTypeId: string): boolean => {
+        return (get().preferences.selected_broadcast_types || []).includes(broadcastTypeId);
+      },
     })),
     {
       name: 'preferences-storage',
@@ -344,6 +444,12 @@ export const usePreferencesStore = create<PreferencesState>()(
         preferences: state.preferences,
         hasUnsavedChanges: state.hasUnsavedChanges,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Apply UI preferences when store is rehydrated from localStorage
+        if (state?.preferences) {
+          applyUIPreferences(state.preferences);
+        }
+      },
     }
   )
 );
@@ -390,18 +496,20 @@ export const useLocalizationPreferences = () => {
 };
 
 export const useContentPreferences = () => {
-  const { selected_genres, selected_services, selected_providers } = usePreferencesStore((state) => state.preferences);
+  const { selected_genres, selected_services, selected_providers, selected_broadcast_types } = usePreferencesStore((state) => state.preferences);
   const {
     addGenre, removeGenre, toggleGenre,
     addService, removeService, toggleService,
     addProvider, removeProvider, toggleProvider,
-    isGenreSelected, isServiceSelected, isProviderSelected
+    addBroadcastType, removeBroadcastType, toggleBroadcastType,
+    isGenreSelected, isServiceSelected, isProviderSelected, isBroadcastTypeSelected
   } = usePreferencesStore();
 
   return {
     selected_genres,
     selected_services,
     selected_providers,
+    selected_broadcast_types,
     // Genre methods
     addGenre,
     removeGenre,
@@ -417,6 +525,11 @@ export const useContentPreferences = () => {
     removeProvider,
     toggleProvider,
     isProviderSelected,
+    // Broadcast type methods
+    addBroadcastType,
+    removeBroadcastType,
+    toggleBroadcastType,
+    isBroadcastTypeSelected,
   };
 };
 

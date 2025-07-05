@@ -95,7 +95,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   const { themeSettings } = useTheme();
   const { openTrailer, closeTrailer, isOpen: isTrailerOpen, trailerKey } = useTrailer();
   const { isOpen: isModalOpen } = useModal();
-  const { isSectionExpanded, expandSection } = useSectionExpansion();
+  const { isSectionExpanded, expandSection, toggleSection } = useSectionExpansion();
   
   // Use global expansion state if sectionId provided, fallback to local prop for backwards compatibility
   const actualIsExpanded = sectionId ? isSectionExpanded(sectionId) : isExpanded;
@@ -295,7 +295,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   const handleExpandToggle = () => {
     // Use global expansion context if sectionId provided
     if (sectionId) {
-      expandSection(sectionId);
+      toggleSection(sectionId);
     } else if (onExpandedChange) {
       // Fallback to local state for backwards compatibility
       onExpandedChange(!isExpanded);

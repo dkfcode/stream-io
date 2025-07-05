@@ -15,7 +15,7 @@ router.get('/preferences', async (req: AuthenticatedRequest, res) => {
   try {
     const query = `
       SELECT id, user_id, selected_genres, selected_services, selected_providers,
-             language, region, timezone, theme, created_at, updated_at
+             selected_broadcast_types, language, region, timezone, theme, created_at, updated_at
       FROM user_preferences 
       WHERE user_id = $1
     `;
@@ -28,7 +28,7 @@ router.get('/preferences', async (req: AuthenticatedRequest, res) => {
         INSERT INTO user_preferences (user_id)
         VALUES ($1)
         RETURNING id, user_id, selected_genres, selected_services, selected_providers,
-                  language, region, timezone, theme, created_at, updated_at
+                  selected_broadcast_types, language, region, timezone, theme, created_at, updated_at
       `;
 
       const createResult = await pool.query(createQuery, [req.user!.id]);
@@ -61,6 +61,7 @@ router.put('/preferences', validate(schemas.updatePreferences), async (req: Auth
       selected_genres,
       selected_services,
       selected_providers,
+      selected_broadcast_types,
       language,
       region,
       timezone,
@@ -82,6 +83,10 @@ router.put('/preferences', validate(schemas.updatePreferences), async (req: Auth
     if (selected_providers !== undefined) {
       updateFields.push(`selected_providers = $${++paramCount}`);
       values.push(selected_providers);
+    }
+    if (selected_broadcast_types !== undefined) {
+      updateFields.push(`selected_broadcast_types = $${++paramCount}`);
+      values.push(selected_broadcast_types);
     }
     if (language !== undefined) {
       updateFields.push(`language = $${++paramCount}`);
@@ -112,7 +117,7 @@ router.put('/preferences', validate(schemas.updatePreferences), async (req: Auth
       SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE user_id = $1
       RETURNING id, user_id, selected_genres, selected_services, selected_providers,
-                language, region, timezone, theme, created_at, updated_at
+                selected_broadcast_types, language, region, timezone, theme, created_at, updated_at
     `;
 
     const result = await pool.query(query, values);
@@ -122,11 +127,11 @@ router.put('/preferences', validate(schemas.updatePreferences), async (req: Auth
       const createQuery = `
         INSERT INTO user_preferences (
           user_id, selected_genres, selected_services, selected_providers,
-          language, region, timezone, theme
+          selected_broadcast_types, language, region, timezone, theme
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, user_id, selected_genres, selected_services, selected_providers,
-                  language, region, timezone, theme, created_at, updated_at
+                  selected_broadcast_types, language, region, timezone, theme, created_at, updated_at
       `;
 
       const createResult = await pool.query(createQuery, [
@@ -134,6 +139,7 @@ router.put('/preferences', validate(schemas.updatePreferences), async (req: Auth
         selected_genres || [],
         selected_services || [],
         selected_providers || [],
+        selected_broadcast_types || [],
         language || 'en',
         region || 'US',
         timezone || 'America/New_York',

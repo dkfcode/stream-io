@@ -12,50 +12,16 @@ interface StreamingPanelProps {
 
 const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
   const { 
-    selectedGenres,
-    setSelectedGenres,
-    selectedServices,
-    setSelectedServices,
-    selectedProviders,
-    setSelectedProviders,
-    hasTVProvider,
-    setHasTVProvider,
-    followsLiveBroadcasting,
-    setFollowsLiveBroadcasting,
-    hasSelectedPreferences,
-    setHasSelectedPreferences,
-    hasSelectedServices,
-    setHasSelectedServices,
-    hasSelectedProviders,
-    setHasSelectedProviders,
-    hasSelectedBroadcastTypes,
-    setHasSelectedBroadcastTypes,
-    selectedBroadcastTypes,
-    setSelectedBroadcastTypes,
-    selectedSports,
-    setSelectedSports,
-    selectedSportLevels,
-    setSelectedSportLevels,
-    selectedNewsCategories,
-    setSelectedNewsCategories,
-    selectedAwardCategories,
-    setSelectedAwardCategories,
-    selectedRealityCategories,
-    setSelectedRealityCategories,
-    selectedCompetitionCategories,
-    setSelectedCompetitionCategories,
-    selectedGameShowCategories,
-    setSelectedGameShowCategories,
-    selectedMusicCategories,
-    setSelectedMusicCategories,
-    selectedTalkShowCategories,
-    setSelectedTalkShowCategories,
-    selectedWeatherCategories,
-    setSelectedWeatherCategories,
-    selectedReligiousCategories,
-    setSelectedReligiousCategories,
-    selectedCeremonyCategories,
-    setSelectedCeremonyCategories
+    preferences,
+    toggleGenre,
+    toggleService,
+    toggleProvider,
+    toggleBroadcastType,
+    isGenreSelected,
+    isServiceSelected,
+    isProviderSelected,
+    isBroadcastTypeSelected,
+    updatePreferencesLocally
   } = usePreferences();
 
   // State for which section is expanded (accordion behavior)
@@ -77,7 +43,10 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
   };
 
   const getSelectedGenres = () => {
-    return GENRES.filter(genre => selectedGenres.includes(genre.id))
+    if (!preferences.selected_genres || !Array.isArray(preferences.selected_genres)) {
+      return [];
+    }
+    return GENRES.filter(genre => preferences.selected_genres.includes(genre.id))
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(genre => ({
         name: genre.name
@@ -85,10 +54,10 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
   };
 
   // Check if tasks are complete
-  const isGenresComplete = hasSelectedPreferences && selectedGenres.length > 0;
-  const isStreamingComplete = hasSelectedServices && selectedServices.length > 0;
-  const isTVProviderComplete = hasSelectedProviders && selectedProviders.length > 0;
-  const isLiveBroadcastComplete = hasSelectedBroadcastTypes && followsLiveBroadcasting !== null;
+  const isGenresComplete = preferences.selected_genres.length > 0;
+  const isStreamingComplete = preferences.selected_services.length > 0;
+  const isTVProviderComplete = preferences.selected_providers.length > 0;
+  const isLiveBroadcastComplete = (preferences.selected_broadcast_types || []).length > 0;
 
   const selectedGenresList = getSelectedGenres();
 
@@ -102,72 +71,22 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
 
   // Genre selection handlers
   const handleGenreToggle = (genreId: string) => {
-    const newGenres = selectedGenres.includes(genreId)
-      ? selectedGenres.filter(id => id !== genreId)
-      : [...selectedGenres, genreId];
-    
-    setSelectedGenres(newGenres);
-    setHasSelectedPreferences(true);
+    toggleGenre(genreId);
   };
 
   // Streaming service selection handlers
   const handleServiceToggle = (serviceId: string) => {
-    const newServices = selectedServices.includes(serviceId)
-      ? selectedServices.filter(id => id !== serviceId)
-      : [...selectedServices, serviceId];
-    
-    setSelectedServices(newServices);
-    setHasSelectedServices(true);
+    toggleService(serviceId);
   };
 
   // TV Provider selection handlers
   const handleProviderToggle = (providerId: string) => {
-    const newProviders = selectedProviders.includes(providerId)
-      ? selectedProviders.filter(id => id !== providerId)
-      : [...selectedProviders, providerId];
-    
-    setSelectedProviders(newProviders);
-    setHasSelectedProviders(true);
-    setHasTVProvider(true);
+    toggleProvider(providerId);
   };
 
   // Live broadcasting handlers
-  const handleLiveBroadcastingChoice = (follows: boolean) => {
-    setFollowsLiveBroadcasting(follows);
-    setHasSelectedBroadcastTypes(true);
-    if (!follows) {
-      // Clear all broadcast selections if user doesn't want live content
-      setSelectedBroadcastTypes([]);
-      setSelectedSports([]);
-      setSelectedSportLevels([]);
-      setSelectedNewsCategories([]);
-      setSelectedAwardCategories([]);
-      setSelectedRealityCategories([]);
-      setSelectedCompetitionCategories([]);
-      setSelectedGameShowCategories([]);
-      setSelectedMusicCategories([]);
-      setSelectedTalkShowCategories([]);
-      setSelectedWeatherCategories([]);
-      setSelectedReligiousCategories([]);
-      setSelectedCeremonyCategories([]);
-    }
-  };
-
   const handleBroadcastTypeToggle = (typeId: string) => {
-    const newTypes = selectedBroadcastTypes.includes(typeId)
-      ? selectedBroadcastTypes.filter(id => id !== typeId)
-      : [...selectedBroadcastTypes, typeId];
-    
-    setSelectedBroadcastTypes(newTypes);
-    
-    // Update followsLiveBroadcasting based on whether any types are selected
-    if (newTypes.length > 0) {
-      setFollowsLiveBroadcasting(true);
-    } else {
-      setFollowsLiveBroadcasting(false);
-    }
-    
-    setHasSelectedBroadcastTypes(true);
+    toggleBroadcastType(typeId);
   };
 
   const setupTasks = [
@@ -185,8 +104,8 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
       title: 'Streaming Services',
       icon: Tv,
       isComplete: isStreamingComplete,
-      description: STREAMING_SERVICES.filter(service => selectedServices.includes(service.id)).length > 0 ? null : 'No streaming services selected',
-      selectedItems: STREAMING_SERVICES.filter(service => selectedServices.includes(service.id)).length > 0 ? STREAMING_SERVICES.filter(service => selectedServices.includes(service.id)).sort((a, b) => a.name.localeCompare(b.name)) : null,
+      description: STREAMING_SERVICES.filter(service => preferences.selected_services.includes(service.id)).length > 0 ? null : 'No streaming services selected',
+      selectedItems: STREAMING_SERVICES.filter(service => preferences.selected_services.includes(service.id)).length > 0 ? STREAMING_SERVICES.filter(service => preferences.selected_services.includes(service.id)).sort((a, b) => a.name.localeCompare(b.name)) : null,
       isExpanded: expandedSection === 'streaming'
     },
     {
@@ -194,11 +113,11 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
       title: 'TV Provider',
       icon: Satellite,
       isComplete: isTVProviderComplete,
-      description: TV_PROVIDERS.filter(provider => selectedProviders.includes(provider.id)).length > 0 
+      description: TV_PROVIDERS.filter(provider => preferences.selected_providers.includes(provider.id)).length > 0 
         ? null
         : 'No TV provider selected',
-      selectedItems: TV_PROVIDERS.filter(provider => selectedProviders.includes(provider.id)).length > 0 
-        ? TV_PROVIDERS.filter(provider => selectedProviders.includes(provider.id)).sort((a, b) => a.name.localeCompare(b.name))
+      selectedItems: TV_PROVIDERS.filter(provider => preferences.selected_providers.includes(provider.id)).length > 0 
+        ? TV_PROVIDERS.filter(provider => preferences.selected_providers.includes(provider.id)).sort((a, b) => a.name.localeCompare(b.name))
         : null,
       isExpanded: expandedSection === 'tv-provider'
     },
@@ -207,12 +126,8 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
       title: 'Live Broadcasting',
       icon: Radio,
       isComplete: isLiveBroadcastComplete,
-      description: followsLiveBroadcasting === null
-        ? 'Not configured'
-        : followsLiveBroadcasting 
-          ? (selectedBroadcastTypes.length > 0 ? null : 'Interested but no types selected')
-          : 'No options selected',
-      selectedItems: followsLiveBroadcasting === true && selectedBroadcastTypes.length > 0 ? BROADCAST_TYPES.filter(type => selectedBroadcastTypes.includes(type.id)).sort((a, b) => a.name.localeCompare(b.name)) : null,
+      description: BROADCAST_TYPES.filter(type => (preferences.selected_broadcast_types || []).includes(type.id)).length > 0 ? null : 'No broadcast types selected',
+      selectedItems: BROADCAST_TYPES.filter(type => (preferences.selected_broadcast_types || []).includes(type.id)).length > 0 ? BROADCAST_TYPES.filter(type => (preferences.selected_broadcast_types || []).includes(type.id)).sort((a, b) => a.name.localeCompare(b.name)) : null,
       isExpanded: expandedSection === 'live-broadcast'
     }
   ];
@@ -220,7 +135,7 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
   const renderGenreBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3">
       {GENRES.sort((a, b) => a.name.localeCompare(b.name)).map((genre) => {
-        const isSelected = selectedGenres.includes(genre.id);
+        const isSelected = isGenreSelected(genre.id);
         return (
           <button
             key={genre.id}
@@ -241,7 +156,7 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
   const renderServiceBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3">
       {STREAMING_SERVICES.sort((a, b) => a.name.localeCompare(b.name)).map((service) => {
-        const isSelected = selectedServices.includes(service.id);
+        const isSelected = isServiceSelected(service.id);
         return (
           <button
             key={service.id}
@@ -271,7 +186,7 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
     <div className="mt-3">
       <div className="flex flex-wrap gap-2">
         {TV_PROVIDERS.sort((a, b) => a.name.localeCompare(b.name)).map((provider) => {
-          const isSelected = selectedProviders.includes(provider.id);
+          const isSelected = isProviderSelected(provider.id);
           return (
             <button
               key={provider.id}
@@ -305,7 +220,7 @@ const StreamingPanel: React.FC<StreamingPanelProps> = ({ onBack }) => {
   const renderLiveBroadcastBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3">
       {BROADCAST_TYPES.sort((a, b) => a.name.localeCompare(b.name)).map((type) => {
-        const isSelected = selectedBroadcastTypes.includes(type.id);
+        const isSelected = isBroadcastTypeSelected(type.id);
         return (
           <button
             key={type.id}

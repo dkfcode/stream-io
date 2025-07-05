@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     selected_genres TEXT[], -- Array of genre IDs
     selected_services TEXT[], -- Array of streaming service IDs
     selected_providers TEXT[], -- Array of TV provider IDs
+    selected_broadcast_types TEXT[], -- Array of broadcast type IDs for live TV
     language VARCHAR(10) DEFAULT 'en',
     region VARCHAR(10) DEFAULT 'US',
     timezone VARCHAR(50) DEFAULT 'America/New_York',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, LayoutGrid, Play, Monitor, Globe, Volume2, MapPin, ChevronDown, Subtitles, AudioWaveform, Languages } from 'lucide-react';
-import { useTheme } from '../../stores/uiStore';
+import { usePreferencesStore } from '../../stores/preferencesStore';
 import { useI18n } from '../../constants/i18n';
 
 interface AppSettingsPanelProps {
@@ -8,7 +8,7 @@ interface AppSettingsPanelProps {
 }
 
 const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
-  const { themeSettings, updateThemeSetting } = useTheme();
+  const { preferences, updateThemeSetting } = usePreferencesStore();
   const { t } = useI18n();
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
@@ -28,20 +28,20 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
   ];
 
   const regions = [
-    { code: 'us', label: 'United States' },
-    { code: 'ca', label: 'Canada' },
-    { code: 'gb', label: 'United Kingdom' },
-    { code: 'au', label: 'Australia' },
-    { code: 'de', label: 'Germany' },
-    { code: 'fr', label: 'France' },
-    { code: 'es', label: 'Spain' },
-    { code: 'it', label: 'Italy' },
-    { code: 'jp', label: 'Japan' },
-    { code: 'kr', label: 'South Korea' },
-    { code: 'cn', label: 'China' },
-    { code: 'br', label: 'Brazil' },
-    { code: 'mx', label: 'Mexico' },
-    { code: 'in', label: 'India' }
+    { code: 'US', label: 'United States' },
+    { code: 'CA', label: 'Canada' },
+    { code: 'GB', label: 'United Kingdom' },
+    { code: 'AU', label: 'Australia' },
+    { code: 'DE', label: 'Germany' },
+    { code: 'FR', label: 'France' },
+    { code: 'ES', label: 'Spain' },
+    { code: 'IT', label: 'Italy' },
+    { code: 'JP', label: 'Japan' },
+    { code: 'KR', label: 'South Korea' },
+    { code: 'CN', label: 'China' },
+    { code: 'BR', label: 'Brazil' },
+    { code: 'MX', label: 'Mexico' },
+    { code: 'IN', label: 'India' }
   ];
 
   const subtitleOptions = [
@@ -50,13 +50,23 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
     ...languages.filter(lang => lang.code !== 'en')
   ];
 
-  const currentLanguage = languages.find(lang => lang.code === themeSettings.language);
-  const currentRegion = regions.find(region => region.code === themeSettings.region);
-  const currentAudioLanguage = languages.find(lang => lang.code === themeSettings.preferredAudioLanguage);
-  const currentSubtitle = subtitleOptions.find(sub => sub.code === themeSettings.preferredSubtitles);
+  const currentLanguage = languages.find(lang => lang.code === preferences.language);
+  const currentRegion = regions.find(region => region.code === preferences.region);
+  const currentAudioLanguage = languages.find(lang => lang.code === preferences.preferredAudioLanguage);
+  const currentSubtitle = subtitleOptions.find(sub => sub.code === preferences.preferredSubtitles);
 
-  const handleSettingChange = (key: string, value: string | number | boolean) => {
-    // ... existing code ...
+  // Debug logging to help identify issues
+  console.log('🔧 AppSettings Debug:', {
+    preferences,
+    currentLanguage,
+    currentRegion,
+    currentAudioLanguage,
+    currentSubtitle
+  });
+
+  const handleSettingChange = (key: keyof typeof preferences, value: any) => {
+    console.log('🔧 Setting change:', { key, value });
+    updateThemeSetting(key, value);
   };
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -94,9 +104,12 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
               {/* Inline Density Picker */}
               <div className="flex space-x-2">
                 <button
-                  onClick={() => updateThemeSetting('interfaceDensity', 'compact')}
+                  onClick={() => {
+                    console.log('🔧 Clicked compact');
+                    updateThemeSetting('interfaceDensity', 'compact');
+                  }}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    themeSettings.interfaceDensity === 'compact'
+                    preferences.interfaceDensity === 'compact'
                       ? 'bg-purple-600 text-white'
                       : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
@@ -104,9 +117,12 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                   {t('app_settings.compact')}
                 </button>
                 <button
-                  onClick={() => updateThemeSetting('interfaceDensity', 'standard')}
+                  onClick={() => {
+                    console.log('🔧 Clicked standard');
+                    updateThemeSetting('interfaceDensity', 'standard');
+                  }}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    themeSettings.interfaceDensity === 'standard'
+                    preferences.interfaceDensity === 'standard'
                       ? 'bg-purple-600 text-white'
                       : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
@@ -114,9 +130,12 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                   {t('app_settings.standard')}
                 </button>
                 <button
-                  onClick={() => updateThemeSetting('interfaceDensity', 'spacious')}
+                  onClick={() => {
+                    console.log('🔧 Clicked spacious');
+                    updateThemeSetting('interfaceDensity', 'spacious');
+                  }}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    themeSettings.interfaceDensity === 'spacious'
+                    preferences.interfaceDensity === 'spacious'
                       ? 'bg-purple-600 text-white'
                       : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
@@ -147,14 +166,17 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                 
                 {/* Inline Toggle */}
                 <button
-                  onClick={() => updateThemeSetting('autoplayVideos', !themeSettings.autoplayVideos)}
+                  onClick={() => {
+                    console.log('🔧 Clicked autoplay toggle, current value:', preferences.autoplayVideos);
+                    updateThemeSetting('autoplayVideos', !preferences.autoplayVideos);
+                  }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
-                    themeSettings.autoplayVideos ? 'bg-purple-600' : 'bg-gray-600'
+                    preferences.autoplayVideos ? 'bg-purple-600' : 'bg-gray-600'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      themeSettings.autoplayVideos ? 'translate-x-6' : 'translate-x-1'
+                      preferences.autoplayVideos ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
@@ -193,7 +215,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                         setAudioLanguageDropdownOpen(false);
                       }}
                       className={`w-full px-4 py-3 text-left hover:bg-gray-700/50 transition-colors first:rounded-t-xl last:rounded-b-xl ${
-                        themeSettings.preferredAudioLanguage === lang.code
+                        preferences.preferredAudioLanguage === lang.code
                           ? 'bg-purple-600/20 text-purple-300'
                           : 'text-gray-300'
                       }`}
@@ -205,7 +227,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
               )}
             </div>
 
-            {/* Subtitle Preference */}
+            {/* Subtitles */}
             <div className="relative">
               <button 
                 onClick={() => {
@@ -237,7 +259,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                         setSubtitleDropdownOpen(false);
                       }}
                       className={`w-full px-4 py-3 text-left hover:bg-gray-700/50 transition-colors first:rounded-t-xl last:rounded-b-xl ${
-                        themeSettings.preferredSubtitles === option.code
+                        preferences.preferredSubtitles === option.code
                           ? 'bg-purple-600/20 text-purple-300'
                           : 'text-gray-300'
                       }`}
@@ -279,7 +301,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
               </button>
 
               {languageDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
@@ -288,7 +310,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                         setLanguageDropdownOpen(false);
                       }}
                       className={`w-full px-4 py-3 text-left hover:bg-gray-700/50 transition-colors first:rounded-t-xl last:rounded-b-xl ${
-                        themeSettings.language === lang.code
+                        preferences.language === lang.code
                           ? 'bg-purple-600/20 text-purple-300'
                           : 'text-gray-300'
                       }`}
@@ -322,7 +344,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
               </button>
 
               {regionDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto">
                   {regions.map((region) => (
                     <button
                       key={region.code}
@@ -331,7 +353,7 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
                         setRegionDropdownOpen(false);
                       }}
                       className={`w-full px-4 py-3 text-left hover:bg-gray-700/50 transition-colors first:rounded-t-xl last:rounded-b-xl ${
-                        themeSettings.region === region.code
+                        preferences.region === region.code
                           ? 'bg-purple-600/20 text-purple-300'
                           : 'text-gray-300'
                       }`}
@@ -347,6 +369,6 @@ const AppSettingsPanel: React.FC<AppSettingsPanelProps> = ({ onBack }) => {
       </div>
     </div>
   );
-}
+};
 
 export default AppSettingsPanel;

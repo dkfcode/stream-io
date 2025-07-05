@@ -4,6 +4,7 @@ import type { SearchResult, VideoResult } from '../types/tmdb';
 import { getVideos, getTopContentForAllPlatforms } from '../services/tmdb';
 import { STREAMING_SERVICES } from '../constants/streamingServices';
 import { useTheme, useModal, useTrailer } from '../stores';
+import { usePreferencesStore } from '../stores/preferencesStore';
 import { useWatchlistStore } from '../stores/watchlistStore';
 import StandardizedFavoriteButton from './StandardizedFavoriteButton';
 
@@ -18,7 +19,7 @@ export interface HeroSectionRef {
 }
 
 const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay, selectedFilter, isPaused = false }, ref) => {
-  const { themeSettings } = useTheme();
+  const { preferences } = usePreferencesStore();
   const { openTrailer, closeTrailer, isOpen: isTrailerActive } = useTrailer();
   const { isOpen: isModalOpen } = useModal();
   const [platformContent, setPlatformContent] = useState<SearchResult[]>([]);
@@ -148,7 +149,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       }
       
       // Start trailer for first slide after 4 seconds (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
-      if (!isPaused && themeSettings.autoplayVideos && trailerKeys[filteredContent[0].id] && !trailerStopped[filteredContent[0].id]) {
+      if (!isPaused && preferences.autoplayVideos && trailerKeys[filteredContent[0].id] && !trailerStopped[filteredContent[0].id]) {
         timeoutRefs.current[filteredContent[0].id] = setTimeout(() => {
           const item = filteredContent[0];
           const trailerKey = trailerKeys[item.id];
@@ -159,7 +160,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       }
       
       // Start text fade-out after 7 seconds (only if autoplay is enabled and not permanently visible)
-      if (themeSettings.autoplayVideos) {
+      if (preferences.autoplayVideos) {
         textFadeTimeoutRef.current = setTimeout(() => {
           if (!isTextPermanentlyVisible) {
             setIsTextVisible(false);
@@ -167,7 +168,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         }, 7000);
       }
     }
-  }, [selectedFilter, allPlatformContent, trailerKeys, isTextPermanentlyVisible, isPaused, themeSettings.autoplayVideos, isInHidden]);
+  }, [selectedFilter, allPlatformContent, trailerKeys, isTextPermanentlyVisible, isPaused, preferences.autoplayVideos, isInHidden]);
 
   // Auto-advance slides (pause when a section is expanded)
   useEffect(() => {
@@ -211,7 +212,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       }
       
       // Only start text fade-out if autoplay is enabled
-      if (themeSettings.autoplayVideos) {
+      if (preferences.autoplayVideos) {
         textFadeTimeoutRef.current = setTimeout(() => {
           if (!isTextPermanentlyVisible) {
             setIsTextVisible(false);
@@ -229,7 +230,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     }
 
     // Start new trailer immediately (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
-    if (!isPaused && themeSettings.autoplayVideos && newContent && trailerKeys[newContent.id] && !trailerStopped[newContent.id]) {
+    if (!isPaused && preferences.autoplayVideos && newContent && trailerKeys[newContent.id] && !trailerStopped[newContent.id]) {
       timeoutRefs.current[newContent.id] = setTimeout(() => {
         const trailerKey = trailerKeys[newContent.id];
         const title = newContent.title || newContent.name || '';
@@ -365,12 +366,12 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
   const resumeTrailer = (contentId: number) => {
     console.log('Resuming trailer for content:', contentId);
     
-    // Only resume trailer if autoplay is enabled
-    if (!themeSettings.autoplayVideos) {
-      console.log('Autoplay disabled, not resuming trailer');
-      setModalJustClosed(prev => ({ ...prev, [contentId]: false }));
-      return;
-    }
+          // Only resume trailer if autoplay is enabled
+      if (!preferences.autoplayVideos) {
+        console.log('Autoplay disabled, not resuming trailer');
+        setModalJustClosed(prev => ({ ...prev, [contentId]: false }));
+        return;
+      }
     
     // Resume trailer from where it left off
     setTrailerStopped(prev => ({ ...prev, [contentId]: false }));
@@ -391,7 +392,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     if (textFadeTimeoutRef.current) {
       clearTimeout(textFadeTimeoutRef.current);
     }
-    if (themeSettings.autoplayVideos) {
+    if (preferences.autoplayVideos) {
       textFadeTimeoutRef.current = setTimeout(() => {
         if (!isTextPermanentlyVisible) {
           setIsTextVisible(false);

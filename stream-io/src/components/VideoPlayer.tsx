@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Loader } from 'lucide-react';
-import { useTheme } from '../stores/uiStore';
+import { usePreferencesStore } from '../stores/preferencesStore';
 
 interface VideoPlayerProps {
   videoKey: string;
@@ -29,7 +29,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   componentId = 'default',
   contentId = 0
 }) => {
-  const { themeSettings } = useTheme();
+  const { preferences } = usePreferencesStore();
   const [showVideo, setShowVideo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
@@ -40,7 +40,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Check if autoplay should be enabled
-  const shouldAutoplay = themeSettings.autoplayVideos && !disableAutoplay;
+  const shouldAutoplay = preferences.autoplayVideos && !disableAutoplay;
 
   // Load YouTube API
   useEffect(() => {

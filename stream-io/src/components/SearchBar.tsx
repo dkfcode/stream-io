@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Search, Clock, Trash2, Star, User, Tv, Film, Building2, ChevronRight, Loader, Brain, Sparkles, TrendingUp, Award } from 'lucide-react';
+import { Search, Clock, Trash2, Star, User, Tv, Film, Building2, ChevronRight, Loader, Brain, Sparkles, TrendingUp, Award, X } from 'lucide-react';
 import { mlSearchService } from '../services/mlSearchService';
 import { getContentByNetwork, getContentByPerson, getStreamingServices } from '../services/tmdb';
 import type { SearchResult, StreamingService, EnhancedSearchResult, PersonResult, RecentSearch } from '../types/tmdb';
@@ -504,12 +504,21 @@ const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(({ onFocusChange, onR
           value={query}
           onChange={(e) => handleSearchChange(e.target.value)}
           onFocus={handleFocus}
-          className={`w-full pl-10 pr-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white font-medium placeholder-gray-500 focus:outline-none transition-all duration-200 caret-purple-500 ${
+          className={`w-full pl-10 ${query.length > 0 ? 'pr-10' : 'pr-4'} py-2 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white font-medium placeholder-gray-500 focus:outline-none transition-all duration-200 caret-purple-500 ${
             isFocused 
               ? 'shadow-lg ring-2 ring-purple-500 border-transparent' 
               : 'focus:ring-2 focus:ring-purple-500 focus:border-transparent'
           }`}
         />
+        {query.length > 0 && (
+          <button
+            onClick={closeSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 hover:text-gray-300 transition-colors duration-200 focus:outline-none focus:text-white"
+            aria-label="Clear search"
+          >
+            <X className="w-full h-full" />
+          </button>
+        )}
       </div>
 
       {/* Search Dropdown */}

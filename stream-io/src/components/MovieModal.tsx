@@ -8,6 +8,7 @@ import VideoPlayer from './VideoPlayer';
 import { useWatchlistStore } from '../stores/watchlistStore';
 import ListSelectionDialog from './ListSelectionDialog';
 import { useTheme, useModal, useTrailer } from '../stores';
+import { usePreferencesStore } from '../stores/preferencesStore';
 import { getChannelBrandColors } from '../constants/channelBrandColors';
 import StandardizedFavoriteButton from './StandardizedFavoriteButton';
 
@@ -55,6 +56,7 @@ const MovieModal: React.FC<MovieModalProps> = ({
   onClose 
 }) => {
   const { themeSettings } = useTheme();
+  const { preferences } = usePreferencesStore();
   const { closeTrailer } = useTrailer();
   const [videos, setVideos] = useState<VideoResult[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -194,7 +196,7 @@ const MovieModal: React.FC<MovieModalProps> = ({
               videoKey={videos[0].key}
               title={item.title || item.name || ''}
               posterPath={item.poster_path || ''}
-              disableAutoplay={!themeSettings.autoplayVideos}
+              disableAutoplay={!preferences.autoplayVideos}
               componentId="movie-modal"
               contentId={item.id}
             />

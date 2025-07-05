@@ -17,16 +17,15 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
     toggleGenre, 
     toggleService, 
     toggleProvider,
+    toggleBroadcastType,
     isGenreSelected,
     isServiceSelected,
-    isProviderSelected
+    isProviderSelected,
+    isBroadcastTypeSelected
   } = usePreferences();
 
   // State for which section is expanded (accordion behavior)
   const [expandedSection, setExpandedSection] = useState<string | null>('genres');
-
-  // For broadcast types - simplified implementation since not all broadcast functionality is in current store
-  const [selectedBroadcastTypes, setSelectedBroadcastTypes] = useState<string[]>([]);
 
   const handleSectionToggle = (sectionId: string) => {
     if (expandedSection === sectionId) {
@@ -37,11 +36,7 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
   };
 
   const handleBroadcastTypeToggle = (typeId: string) => {
-    const newTypes = selectedBroadcastTypes.includes(typeId)
-      ? selectedBroadcastTypes.filter(id => id !== typeId)
-      : [...selectedBroadcastTypes, typeId];
-    
-    setSelectedBroadcastTypes(newTypes);
+    toggleBroadcastType(typeId);
   };
 
   // Calculate completion status
@@ -52,7 +47,7 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
   const isGenresComplete = selectedGenres.length > 0;
   const isStreamingComplete = selectedServices.length > 0;
   const isTVProviderComplete = selectedProviders.length > 0;
-  const isLiveBroadcastComplete = selectedBroadcastTypes.length > 0;
+  const isLiveBroadcastComplete = (preferences?.selected_broadcast_types || []).length > 0;
 
   // Check if all sections are complete (at least one selection from each)
   const allSectionsComplete = isGenresComplete && isStreamingComplete && isTVProviderComplete && isLiveBroadcastComplete;
@@ -60,43 +55,43 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
   // Allow users to proceed anytime without minimum requirements
   const canProceed = true;
 
-
-
+  // Setup tasks with completion status and selected counts
   const setupTasks = [
     {
       id: 'genres',
       title: 'Favorite Genres',
       icon: Star,
       isComplete: isGenresComplete,
-      isExpanded: expandedSection === 'genres',
-      selectedCount: selectedGenres.length
+      selectedCount: selectedGenres.length,
+      isExpanded: expandedSection === 'genres'
     },
     {
       id: 'streaming',
       title: 'Streaming Services',
       icon: Tv,
       isComplete: isStreamingComplete,
-      isExpanded: expandedSection === 'streaming',
-      selectedCount: selectedServices.length
+      selectedCount: selectedServices.length,
+      isExpanded: expandedSection === 'streaming'
     },
     {
       id: 'tv-provider',
       title: 'TV Provider',
       icon: Satellite,
       isComplete: isTVProviderComplete,
-      isExpanded: expandedSection === 'tv-provider',
-      selectedCount: selectedProviders.length
+      selectedCount: selectedProviders.length,
+      isExpanded: expandedSection === 'tv-provider'
     },
     {
       id: 'live-broadcast',
       title: 'Live Broadcasting',
       icon: Radio,
       isComplete: isLiveBroadcastComplete,
-      isExpanded: expandedSection === 'live-broadcast',
-      selectedCount: selectedBroadcastTypes.length
+      selectedCount: (preferences?.selected_broadcast_types || []).length,
+      isExpanded: expandedSection === 'live-broadcast'
     }
   ];
 
+  // Genre selection bubbles
   const renderGenreBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3 w-full">
       {GENRES.sort((a, b) => a.name.localeCompare(b.name)).map((genre) => {
@@ -118,6 +113,7 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
     </div>
   );
 
+  // Streaming service selection bubbles
   const renderServiceBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3 w-full">
       {STREAMING_SERVICES.sort((a, b) => a.name.localeCompare(b.name)).map((service) => {
@@ -149,6 +145,7 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
     </div>
   );
 
+  // TV Provider selection bubbles
   const renderTVProviderBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3 w-full">
       {TV_PROVIDERS.sort((a, b) => a.name.localeCompare(b.name)).map((provider) => {
@@ -165,7 +162,7 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
           >
             <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
               {provider.id === 'other' ? (
-                <span className="text-sm">📺</span>
+                <span className="text-xs">📺</span>
               ) : (
                 <img 
                   src={provider.logo} 
@@ -184,10 +181,11 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
     </div>
   );
 
+  // Live broadcast type selection bubbles
   const renderLiveBroadcastBubbles = () => (
     <div className="flex flex-wrap gap-2 mt-3 w-full">
       {BROADCAST_TYPES.sort((a, b) => a.name.localeCompare(b.name)).map((type) => {
-        const isSelected = selectedBroadcastTypes.includes(type.id);
+        const isSelected = isBroadcastTypeSelected(type.id);
         const emoji = type.id === 'sports' ? '🏆' : 
                      type.id === 'news' ? '📰' : 
                      type.id === 'awards' ? '🏆' : 
@@ -316,7 +314,7 @@ const SetupOverview: React.FC<SetupOverviewProps> = ({ onNext }) => {
                                 </span>
                               ) : null;
                             })}
-                            {task.id === 'live-broadcast' && selectedBroadcastTypes.slice(0, 5).map(typeId => {
+                            {task.id === 'live-broadcast' && (preferences?.selected_broadcast_types || []).slice(0, 5).map(typeId => {
                               const type = BROADCAST_TYPES.find(t => t.id === typeId);
                               const emoji = typeId === 'sports' ? '🏆' : 
                                            typeId === 'news' ? '📰' : 
