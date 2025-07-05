@@ -157,7 +157,7 @@ function App() {
           <WelcomeScreen onGetStarted={handleGetStarted} />
         </React.Suspense>
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 4000,
             style: {
@@ -180,7 +180,7 @@ function App() {
           </React.Suspense>
         </div>
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 4000,
             style: {
@@ -544,7 +544,7 @@ function App() {
 
         {/* Toast notifications */}
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 4000,
             style: {

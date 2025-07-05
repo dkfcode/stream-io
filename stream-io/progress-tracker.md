@@ -3,7 +3,113 @@
 **Last Updated:** January 18, 2025  
 **Current Status:** ✅ **RUNNING LOCALLY ON LOCALHOST** - Development server successfully started and running
 
-## ✅ **LATEST FIX: Authentication Error Resolution - January 18, 2025** ✅
+## ✅ **LATEST FIX: Remote Tab Streaming Logos Updated - January 18, 2025** ✅
+
+**Achievement:** Updated remote tab streaming service logos to match the ones from the Personalize Your Experience screen
+**Status:** ✅ COMPLETE - Remote tab now displays consistent logos with the rest of the application
+
+**Issues Resolved:**
+- **Logo Inconsistency:** Remote tab was using hardcoded logo paths while personalization screen used STREAMING_SERVICES constant
+- **Path Mismatch:** Fixed incorrect logo paths from `/src/assets/` to proper `/images/` paths
+- **Service ID Mapping:** Updated app ID to service ID mapping to match STREAMING_SERVICES structure
+
+**Technical Details:**
+- **Root Cause:** Remote tab had its own hardcoded logo mapping instead of using the centralized STREAMING_SERVICES constant
+- **Solution:** Updated RemoteContent component to import and use STREAMING_SERVICES for consistent logo display
+- **Logo Source:** Now uses `service.logo` property from STREAMING_SERVICES constant instead of hardcoded paths
+
+**Files Modified:**
+- `src/components/RemoteContent.tsx`: Updated getAppLogo function to use STREAMING_SERVICES constant
+- Added import for STREAMING_SERVICES
+- Updated service mapping to match proper service IDs (disney-plus, amazon-prime, apple-tv, etc.)
+
+**User Impact:**
+- ✅ Consistent logo display across all app screens
+- ✅ Remote tab streaming apps now show same high-quality logos as personalization screen
+- ✅ Better visual consistency throughout the application
+- ✅ Centralized logo management for easier maintenance
+
+## ✅ **PREVIOUS FIX: Toast Notification Position - January 18, 2025** ✅
+
+**Achievement:** Fixed toast notification positioning from top-right to top-center for better visibility
+**Status:** ✅ COMPLETE - Confirmation displays now appear in the top middle instead of the very right
+
+**Issues Resolved:**
+- **Toast Position:** Changed notification position from top-right to top-center for better user visibility
+- **Watchlist Confirmations:** "Added to watchlist" messages now display prominently in the top middle
+- **Better User Experience:** Notifications are now centered and more noticeable to users
+
+**Technical Details:**
+- **Root Cause:** All Toaster components were configured with `position="top-right"` which positioned notifications far to the right
+- **Solution:** Updated all three Toaster configurations to use `position="top-center"`
+- **Comprehensive Fix:** Updated notifications across all app screens (welcome, setup, main app)
+
+**Files Modified:**
+- `src/App.tsx`: Updated all three Toaster configurations to use top-center positioning
+
+**User Impact:**
+- ✅ Confirmation messages now appear in the top middle of the screen
+- ✅ Better visibility for success/error notifications
+- ✅ More prominent display for watchlist actions
+- ✅ Consistent notification positioning across all app screens
+
+## ✅ **LATEST FIX: Magic Search Screen Bottom Cutoff - January 18, 2025** ✅
+
+**Achievement:** Fixed bottom content cutoff by adding proper bottom padding to prevent overlap with bottom navigation
+**Status:** ✅ COMPLETE - AI Search results page now displays properly without content being cut off at the bottom
+
+**Issues Resolved:**
+- **Bottom Navigation Overlap:** Fixed content being cut off at the bottom by the bottom navigation bar
+- **Proper Scrolling:** Users can now scroll to the very bottom and see all content
+- **Better User Experience:** All search results are now fully accessible
+
+**Technical Details:**
+- **Root Cause:** Missing bottom padding caused content to be hidden behind the bottom navigation bar
+- **Solution:** Added `pb-24` (96px) bottom padding to both loading and main content areas
+- **Layout Changes:**
+  - Added `pb-24` to main content containers
+  - Ensures adequate space for bottom navigation bar
+  - Maintains consistent spacing across all screen sizes
+
+**Files Modified:**
+- `src/components/AISearchResultsPage.tsx`: Added bottom padding to prevent navigation overlap
+
+**User Impact:**
+- ✅ All search results are now fully visible when scrolling to the bottom
+- ✅ No content is hidden behind the bottom navigation bar
+- ✅ Better scrolling experience for users
+- ✅ Consistent layout spacing throughout the page
+
+## ✅ **PREVIOUS FIX: Magic Search Screen Header Removal - January 18, 2025** ✅
+
+**Achievement:** Removed the problematic fixed header from the magic search screen that was cutting off content
+**Status:** ✅ COMPLETE - AI Search results page now displays properly without any content cutoff
+
+**Issues Resolved:**
+- **Fixed Header Cutoff:** Removed the fixed header that was causing text and filter button cutoff
+- **Layout Improvement:** Moved back button, title, and filter controls into the main content area
+- **Better User Experience:** All content is now fully visible and accessible
+
+**Technical Details:**
+- **Root Cause:** Fixed header with `position: fixed` was overlapping content and causing visual cutoff
+- **Solution:** Completely removed the fixed header and integrated controls into the main content flow
+- **Layout Changes:**
+  - Removed `<header>` with `fixed top-0` positioning
+  - Removed `pt-[calc(60px+1rem)]` padding compensation
+  - Moved back button, search title, and filter dropdown to main content area
+  - Updated styling to use consistent gray backgrounds instead of toolbar theme
+
+**Files Modified:**
+- `src/components/AISearchResultsPage.tsx`: Complete header removal and layout restructuring
+
+**User Impact:**
+- ✅ Magic search screen displays properly without any content cutoff
+- ✅ All text and controls are fully visible and accessible
+- ✅ Filter button works properly without being cut off
+- ✅ Cleaner, more accessible layout
+- ✅ Better mobile experience without fixed header overlap
+
+## ✅ **PREVIOUS FIX: Authentication Error Resolution - January 18, 2025** ✅
 
 **Achievement:** Successfully resolved "No access token available" error in app settings
 **Status:** ✅ COMPLETE - App now works properly for both authenticated and unauthenticated users
@@ -2167,979 +2273,4 @@ Function calls → getApiClient().get() → Initialized client with Bearer token
 - ✅ **TMDB authentication fixes were deployed successfully** - All Bearer token fixes active in production
 - ✅ **Environment variables properly configured** - VITE_TMDB_ACCESS_TOKEN correctly set  
 - ✅ **Backend server running** - Node.js process active (PID 1)
-- ❌ **Database connection killing server** - Pool error handler calling `process.exit(-1)` on connection failure
-
-**Technical Analysis:**
-- **Database Configuration:** All DB environment variables properly set (DB_HOST=db, DB_USER=streamguide_user, etc.)
-- **Network Issue:** Hostname "db" not resolvable in Docker network (likely missing database service in Coolify)
-- **Fatal Error Handler:** `pool.on('error')` handler in `backend/src/config/database.ts` was terminating entire process
-- **Design Intent:** StreamGuide designed to work without database for content browsing, but error handler prevented graceful fallback
-
-**Solution Applied:**
-1. **Modified pool error handler** - Changed from `process.exit(-1)` to graceful error logging in production
-2. **Environment-specific behavior** - Still exit in development where database expected, continue in production
-3. **Enhanced connection timeouts** - Shorter timeouts in production to fail faster and continue startup
-4. **Graceful degradation messaging** - Clear logging when database unavailable but server continuing
-
-**Technical Implementation:**
-- ✅ **Database resilience:** Server now starts successfully even when database hostname unresolvable
-- ✅ **Feature degradation:** Database-dependent features (auth, watchlists) disabled gracefully
-- ✅ **Content features preserved:** TMDB API content browsing works without database
-- ✅ **Production stability:** No more server crashes due to database connectivity issues
-
-**Expected Result:** After redeployment, StreamGuide will:
-- ✅ **Start successfully** even without database service
-- ✅ **Load TMDB content** in all sections (with our authentication fixes)
-- ✅ **Serve frontend properly** without database dependency
-- ✅ **Display movies/TV shows** using TMDB API integration
-- ⚠️ **Disable auth features** until database service added
-
-**Database Service Next Steps (Optional):**
-1. **Add PostgreSQL service** in Coolify dashboard for full functionality
-2. **Or continue database-free** for content browsing only
-3. **Monitor deployment logs** for successful startup without database errors
-
-**Status:** ✅ CRITICAL PRODUCTION CRASH ISSUE RESOLVED - Server will now start and serve content regardless of database availability!
-
-## ✅ LATEST TROUBLESHOOTING: Comprehensive Port Conflict Resolution & Prevention - July 2, 2025 ✅
-**Issue:** Backend development server repeatedly failing to start with `EADDRINUSE: address already in use 0.0.0.0:3001` errors, with multiple orphaned processes accumulating over time
-**Root Cause Analysis:** Multiple instances of Node.js processes (PIDs 88783, 94146) were accumulating on port 3001, plus frontend Vite dev servers were leaving orphaned processes on ports 5173-5177
-**Systemic Development Issue:** This commonly happens when:
-- Development servers are stopped abruptly (Ctrl+C might not kill all child processes)
-- Terminal sessions are closed while servers are running
-- System crashes or restarts leave orphaned Node.js processes
-- Nodemon and ts-node processes don't properly cleanup on exit
-- Multiple concurrent development sessions create port conflicts
-
-**Comprehensive Solution Implemented:**
-1. **Immediate Process Cleanup:** Used `lsof -i :3001` to identify and `kill -9` all conflicting processes
-2. **Systematic Process Termination:** Used `pkill` commands to eliminate all nodemon and ts-node processes
-3. **Created Automated Cleanup Script:** Built `scripts/cleanup-dev.sh` for comprehensive environment reset
-4. **Added NPM Script Integration:** Added `dev:clean` command to package.json for easy access
-5. **Multi-Port Management:** Script handles both backend (3001) and frontend (5173-5180) port ranges
-
-**New Cleanup Script Features:**
-```bash
-npm run dev:clean  # One-command solution for all port conflicts
-```
-
-**Technical Implementation:**
-- ✅ **scripts/cleanup-dev.sh:** Comprehensive cleanup script with intelligent process detection
-- ✅ **Multi-port cleanup:** Handles backend port 3001 and frontend ports 5173-5180
-- ✅ **Process targeting:** Specifically targets nodemon, ts-node, and project-related processes
-- ✅ **Verification system:** Confirms ports are free before completing
-- ✅ **Safe execution:** Uses error handling to prevent script failures
-- ✅ **Package.json integration:** Available as `npm run dev:clean` command
-
-**Cleanup Script Capabilities:**
-```bash
-# Automated port cleanup
-- Kills processes on port 3001 (backend)
-- Kills processes on ports 5173-5180 (frontend Vite auto-detection range)
-- Terminates all nodemon processes
-- Terminates all ts-node processes  
-- Cleans up project-specific node processes
-- Verifies all ports are free
-- Provides clear feedback and success confirmation
-```
-
-**Resolution Results:** During cleanup, script successfully identified and terminated:
-- 5 frontend processes on ports 5173, 5174, 5175, 5176, 5177
-- Multiple nodemon and ts-node background processes
-- All project-related orphaned processes
-
-**Prevention Workflow:**
-```bash
-# If development servers won't start:
-npm run dev:clean  # Clean up orphaned processes
-npm run dev        # Start fresh development environment
-
-# Alternative manual commands for debugging:
-lsof -i :3001     # Check specific port usage
-lsof -i :5173     # Check frontend port usage
-```
-
-**Development Best Practices Added:**
-- Always run `npm run dev:clean` before starting development if encountering port conflicts
-- Use proper `Ctrl+C` shutdown and wait for "Server stopped" confirmations
-- Monitor for accumulating orphaned processes during extended development sessions
-- Use `npm run health` to verify server status before starting new instances
-
-**Development Environment Status:**
-- ✅ **Comprehensive Cleanup:** All orphaned processes eliminated
-- ✅ **Backend Server:** Successfully bound to port 3001 without conflicts
-- ✅ **Frontend Server:** Running on available port (auto-detected by Vite)
-- ✅ **Database Connection:** PostgreSQL connected and validated
-- ✅ **Process Management:** Automated cleanup system in place
-- ✅ **Future Prevention:** One-command solution available for recurring issues
-
-**Status:** ✅ COMPREHENSIVE PORT MANAGEMENT SOLUTION IMPLEMENTED - Development environment now has automated cleanup and conflict prevention!
-
----
-
-## 🎉 **FINAL STATUS UPDATE - ALL CRITICAL ISSUES RESOLVED!**
-
-### **✅ COMPLETE SYSTEM STATUS - January 17, 2025:**
-- ✅ **All servers running** - Backend (3001) + Frontend (5173) operational
-- ✅ **Database fully functional** - PostgreSQL with proper permissions
-- ✅ **User authentication working** - Registration/login endpoints tested
-- ✅ **Settings persistence restored** - Hybrid localStorage + PostgreSQL sync
-- ✅ **HomePage crash fixed** - Null safety implemented for preferences
-- ✅ **All compilation errors resolved** - TypeScript backend compiling successfully
-- ✅ **Development environment ready** - Full-stack development operational
-- ✅ **Port conflicts resolved** - Automated cleanup system in place
-- ✅ **Database permissions fixed** - All table, sequence, and function privileges granted
-
-### **🚀 READY FOR PRODUCTION:**
-The StreamGuide application is now **fully operational** with:
-- ✅ Complete database integration
-- ✅ Robust error handling  
-- ✅ Graceful fallbacks for all features
-- ✅ Comprehensive documentation
-- ✅ All critical issues resolved
-- ✅ Development environment fully configured
-
-**Project Status: 99.99% Complete** 🎯
-
-**Current Development Servers:**
-- 🖥️ **Backend API:** http://localhost:3001 ✅
-- 🌐 **Frontend App:** http://localhost:5173 ✅  
-- 🗄️ **PostgreSQL Database:** localhost:5432 ✅
-
-**Next Actions Available:**
-1. **Test full functionality** - Both frontend and backend are operational
-2. **Develop new features** - Complete development environment ready
-3. **Deploy to production** - All critical issues resolved
-4. **Monitor performance** - System ready for production use
-
-**Status:** 🎉 **STREAMGUIDE IS FULLY OPERATIONAL** - Ready for development and production! 🚀 
-
-## ✅ **LATEST FIX: Setup Complete Screen Added - January 17, 2025** ✅
-
-**Issue:** User reported that the setup overview didn't look like expected - it was showing intermediate "Setup Overview" screen instead of final "Setup Complete!" confirmation screen
-**Root Cause:** Missing final confirmation screen in onboarding flow - app was going directly from Setup Overview to Main App
-**User Expectation:** Beautiful "Setup Complete!" screen with collapsible sections showing selected preferences before entering main app
-
-**Solution Applied:**
-1. **Created SetupComplete component** - New component matching user's expected design with "Setup Complete!" title
-2. **Added collapsible sections** - Interactive sections for Favorite Genres, Streaming Services, TV Provider with expand/collapse functionality  
-3. **Updated onboarding flow** - Extended flow: Welcome → Setup Overview → **Setup Complete** → Main App
-4. **Enhanced App.tsx** - Added new 'setup-complete' onboarding step with proper handlers
-5. **Fixed preferences integration** - Component safely accesses actual preferences structure without broadcast types
-
-**Technical Implementation:**
-- ✅ **src/components/SetupComplete.tsx:** New component with collapsible preference sections
-- ✅ **src/App.tsx:** Extended onboarding flow with setup-complete step  
-- ✅ **Onboarding handlers:** Added `handleSetupNext()` and `handleStartDiscovering()` functions
-- ✅ **Component integration:** SetupComplete component properly lazy-loaded with error boundaries
-- ✅ **Preferences safety:** Component works with actual preferences store structure
-
-**SetupComplete Features:**
-- 🎉 **Setup Complete title** - "Setup Complete!" with encouraging subtitle
-- 📁 **Collapsible sections** - Click to expand/collapse each preference category
-- 🎭 **Favorite Genres** - Shows selected genres with proper names (Star icon)
-- 📺 **Streaming Services** - Shows selected services with proper names (TV icon) 
-- 📡 **TV Provider** - Shows selected providers with proper names (Satellite icon)
-- 🎯 **Start Discovering button** - Purple gradient button to enter main app
-
-**User Experience Flow:**
-1. **Welcome Screen** - Beautiful animated welcome with feature carousel
-2. **Setup Overview** - Progress tracking and 50% completion requirement  
-3. **Setup Complete!** - ✨ **NEW** ✨ Final confirmation with collapsible preference summary
-4. **Main App** - Full StreamGuide application
-
-**Status:** ✅ ONBOARDING FLOW ENHANCED - Users now see proper "Setup Complete!" confirmation screen before entering main app!
-
-## ✅ **LATEST FIX: SetupOverview Restored to Proper "Personalize Your Experience" Interface - January 17, 2025** ✅
-
-**Issue:** User reported SetupOverview didn't look like expected screenshots - was showing intermediate summary screen instead of actual preference selection interface
-**Root Cause:** Current SetupOverview.tsx was showing a summary of selected preferences, but user expected the interactive "Personalize Your Experience" selection interface
-**User Expectation:** Beautiful preference selection screen with "Personalize Your Experience" title, collapsible sections, and interactive selection bubbles
-
-**Solution Applied:**
-1. **Completely replaced SetupOverview.tsx** - Created proper preference selection interface matching user's screenshots exactly
-2. **Added "Personalize Your Experience" title** - Exact title and subtitle from screenshots
-3. **Implemented collapsible sections** - Four interactive sections with proper icons (Star, TV, Satellite, Radio)
-4. **Added selection bubbles** - Interactive genre, service, provider, and broadcast type selection
-5. **Updated preferences integration** - Uses current preferences store API (toggleGenre, toggleService, etc.)
-6. **Added "Start Exploring Now" button** - Proper button text and styling
-
-**Technical Implementation:**
-- ✅ **src/components/SetupOverview.tsx:** Completely rewritten to match screenshots
-- ✅ **Collapsible sections:** Click to expand/collapse each preference category with smooth animations
-- ✅ **Interactive selection:** Genre, streaming service, TV provider, and live broadcasting selection bubbles
-- ✅ **Progress tracking:** Requires at least 2 out of 4 categories to be selected before proceeding
-- ✅ **Modern UI styling:** Matches exact design from user's screenshots
-- ✅ **Proper store integration:** Uses current `usePreferences()` store API
-
-**User Interface Features:**
-- 🎯 **"Personalize Your Experience"** - Exact title from screenshots
-- 📝 **"These steps help us recommend better content for you"** - Proper subtitle
-- 🎭 **Favorite Genres** - Star icon with interactive genre selection bubbles (Action, Adventure, Comedy, etc.)
-- 📺 **Streaming Services** - TV icon with service logos (Netflix, Disney+, Hulu, etc.)
-- 📡 **TV Provider** - Satellite icon with provider selection (AT&T U-verse, COX, DIRECTV, etc.)
-- 📻 **Live Broadcasting** - Radio icon with broadcast categories (Sports, News, Awards, etc.)
-- 🎯 **"Start Exploring Now"** - Purple gradient button to proceed
-
-**Onboarding Flow Now:**
-1. **Welcome Screen** - Beautiful animated welcome with feature carousel
-2. **Personalize Your Experience** - ✨ **RESTORED** ✨ Interactive preference selection interface
-3. **Setup Complete!** - Final confirmation screen with collapsible preference summary
-4. **Main App** - Full StreamGuide application
-
-**Status:** ✅ SETUPOVERVIEW RESTORED TO PROPER INTERFACE - Users now see exact "Personalize Your Experience" screen from screenshots!
-
-## ✅ **LATEST UPDATE: SetupOverview Styling Consistency Fix - January 17, 2025** ✅
-
-**Issue:** User requested that the borders, sizing, and shape of preference boxes in Favorite Genres, Streaming Services, and TV Provider sections match the Live Broadcasting section
-**Root Cause:** Inconsistent styling between sections - Live Broadcasting used `rounded-full` while Streaming Services and TV Provider used `rounded-lg`
-**Solution Applied:**
-1. **Standardized all sections to use `rounded-full`** - All preference selection buttons now have fully rounded corners
-2. **Maintained consistent padding and sizing** - All sections use identical `px-3 py-1.5` padding and `text-sm` font size
-3. **Preserved section-specific features** - Icons and layouts maintained while standardizing shape
-
-**Technical Changes:**
-- ✅ **Streaming Services section:** Changed from `rounded-lg` to `rounded-full` for consistent pill-shaped buttons
-- ✅ **TV Provider section:** Changed from `rounded-lg` to `rounded-full` for consistent pill-shaped buttons
-- ✅ **Favorite Genres section:** Already using `rounded-full` - no changes needed
-- ✅ **Live Broadcasting section:** Already using `rounded-full` - target styling maintained
-
-**Styling Consistency Achieved:**
-- 🎭 **Favorite Genres:** `rounded-full` ✅ (was already correct)
-- 📺 **Streaming Services:** `rounded-full` ✅ (updated from `rounded-lg`)
-- 📡 **TV Provider:** `rounded-full` ✅ (updated from `rounded-lg`)
-- 📻 **Live Broadcasting:** `rounded-full` ✅ (target style)
-
-**User Experience Impact:**
-- ✅ **Visual consistency** - All preference selection buttons now have identical shape and styling
-- ✅ **Professional appearance** - Unified design language across all sections
-- ✅ **Maintained functionality** - All selection interactions work perfectly
-- ✅ **Improved aesthetics** - Consistent pill-shaped buttons throughout the interface
-
-**Status:** ✅ SETUPOVERVIEW STYLING CONSISTENCY ACHIEVED - All preference sections now match the Live Broadcasting section design!
-
-## ✅ **LATEST UPDATE: SetupOverview Layout Consistency Fix - January 17, 2025** ✅
-
-**Issue:** On computer, dropdown sections were changing size when expanded/collapsed - boxes getting smaller when closed and bigger when opened
-**Root Cause:** Container width was adjusting based on expanded content, causing layout shifts when sections expanded with many selection bubbles
-**Solution Applied:** Fixed container width consistency to prevent layout shifts
-**Implementation Details:**
-1. **Added `w-full` to section containers** - Each section now maintains consistent width regardless of expanded state
-2. **Enhanced selection bubble containers** - Added `w-full` to all bubble containers for consistent width behavior
-3. **Prevented container resizing** - Main container maintains stable dimensions during expand/collapse operations
-4. **Fixed for all sections** - Applied consistency fix to Favorite Genres, Streaming Services, TV Provider, and Live Broadcasting sections
-
-**Technical Changes:**
-- ✅ **Section containers:** Added `w-full` class to prevent width changes during expansion
-- ✅ **Bubble containers:** Added `w-full` to all `renderXXXBubbles()` functions for width consistency
-- ✅ **Layout stability:** Container dimensions now remain consistent regardless of content state
-- ✅ **User experience:** Smooth expand/collapse animations without layout shifts
-
-**User Experience Impact:**
-- ✅ **Consistent sizing** - Sections maintain same width when expanded or collapsed
-- ✅ **Smooth animations** - No more jarring layout shifts during section interactions
-- ✅ **Professional appearance** - Stable container dimensions create polished experience
-- ✅ **Cross-device consistency** - Fixed specifically for computer/desktop experience
-
-**Status:** ✅ SETUPOVERVIEW LAYOUT CONSISTENCY ACHIEVED - Sections now maintain consistent size during expand/collapse operations!
-
-## ✅ **LATEST UPDATE: SetupOverview Desktop Layout Enhancement - January 17, 2025** ✅
-
-**Issue:** Sections still getting smaller/bigger on computer when expanding/collapsing - needed larger consistent container size
-**Root Cause:** Container wasn't wide enough to accommodate all content without resizing, causing layout shifts
-**Solution Applied:** Enhanced desktop layout with fixed container dimensions to prevent any size changes
-**Implementation Details:**
-1. **Increased container width** - Changed from `max-w-4xl` → `max-w-6xl` for more content space
-2. **Fixed desktop section width** - Added `lg:w-[900px] lg:mx-auto` for consistent 900px width on large screens
-3. **Added minimum height** - Set `min-h-[80px]` to prevent sections from getting too small
-4. **Centered layout** - Ensured sections are properly centered with consistent spacing
-
-**Technical Changes:**
-- ✅ **Container sizing:** Increased from max-w-4xl to max-w-6xl for better content accommodation
-- ✅ **Desktop fixed width:** Added lg:w-[900px] to maintain consistent 900px width on computers
-- ✅ **Section minimum height:** Added min-h-[80px] to prevent sections from shrinking too much
-- ✅ **Layout centering:** Enhanced centering with lg:mx-auto for desktop experience
-
-**User Experience Impact:**
-- ✅ **Fixed container size** - Sections maintain exact same dimensions when expanding/collapsing
-- ✅ **Desktop optimized** - 900px fixed width prevents any layout shifts on computer
-- ✅ **Professional layout** - Consistent spacing and sizing matches screenshot design
-- ✅ **Responsive design** - Mobile remains flexible while desktop has fixed dimensions
-
-**Status:** ✅ SETUPOVERVIEW DESKTOP LAYOUT ENHANCED - Fixed container size prevents any expansion/contraction on computer!
-
-## ✅ **LATEST UPDATE: SetupOverview Text Shifting Fix - January 17, 2025** ✅
-
-**Issue:** Text in TV Provider and Streaming Services sections was shifting when sections were opened due to dynamic logo loading
-**Root Cause:** Dynamic image loading causing layout shifts - when logos failed to load, `display: none` removed elements completely, shifting text positions
-**Solution Applied:** Implemented consistent icon spacing and prevented layout shifts during image loading/failures
-**Implementation Details:**
-1. **Reserved Icon Space:** Added fixed `w-4 h-4` containers for all icons to prevent layout shifts
-2. **Consistent Spacing:** Changed from `space-x-2` to `gap-2` for more predictable spacing
-3. **Visibility vs Display:** Changed `display: none` to `visibility: hidden` to maintain layout space
-4. **No-wrap Text:** Added `whitespace-nowrap` to prevent text wrapping and maintain consistent button sizes
-5. **Unified Layout:** Applied consistent structure across all sections (Genres, Services, Providers, Broadcasting)
-
-**Technical Changes:**
-- ✅ **Streaming Services:** Fixed icon container with `flex-shrink-0` to prevent shrinking
-- ✅ **TV Provider:** Fixed icon container with consistent spacing for logos and emoji fallback
-- ✅ **Live Broadcasting:** Added icon container for emojis to match other sections
-- ✅ **Favorite Genres:** Added `whitespace-nowrap` for text consistency
-- ✅ **Image Error Handling:** Changed to `visibility: hidden` instead of `display: none`
-
-**User Experience Impact:**
-- ✅ **Stable Layout:** Text no longer shifts when sections expand/collapse
-- ✅ **Consistent Spacing:** All sections maintain identical spacing patterns
-- ✅ **Smooth Animations:** No layout jumps during logo loading
-- ✅ **Professional Appearance:** Predictable button sizes and text positioning
-
-**Status:** ✅ SETUPOVERVIEW TEXT SHIFTING FIXED - All sections now maintain stable layout regardless of image loading!
-
-## ✅ **LATEST UPDATE: SetupOverview Icon Layout Protection Fix - January 17, 2025** ✅
-
-**Issue:** Section icons (Star, TV, Satellite, Radio) getting cut off when there are many selected options due to long text pushing icon out of view
-**Root Cause:** When many options are selected, the text showing selected items became very long and pushed the section icon out of the visible area
-**Solution Applied:** Protected icon and chevron containers with proper flex layout and text overflow handling
-**Implementation Details:**
-1. **Icon Protection:** Added `flex-shrink-0` to icon container to prevent it from shrinking
-2. **Text Container Fix:** Added `min-w-0 flex-1` to text container for proper text truncation
-3. **Overflow Handling:** Changed from `line-clamp-2` to `truncate` for better single-line text handling
-4. **Spacing Improvement:** Changed from `space-x-4` to `gap-4` for more predictable spacing
-5. **Chevron Protection:** Added `flex-shrink-0` to chevron container to prevent it from shrinking
-6. **Selection Count:** Added count display ("X selected:") to make truncated text more informative
-
-**Technical Changes:**
-- ✅ **Icon container:** `flex-shrink-0` ensures icon never gets pushed out of view
-- ✅ **Text container:** `min-w-0 flex-1` allows proper text truncation while maintaining layout
-- ✅ **Title truncation:** Added `truncate` to section titles for consistent overflow handling
-- ✅ **Selected items:** Added count + truncation for better user feedback
-- ✅ **Layout gaps:** Consistent `gap-4` spacing prevents layout collapse
-
-**User Experience Impact:**
-- ✅ **Icons always visible** - Section icons (Star, TV, Satellite, Radio) never get cut off
-- ✅ **Better text handling** - Long selection lists display cleanly with count indicators
-- ✅ **Consistent layout** - All sections maintain identical spacing and proportions
-- ✅ **Professional appearance** - Clean truncation prevents text overflow issues
-
-**Status:** ✅ SETUPOVERVIEW ICON LAYOUT PROTECTION ACHIEVED - Section icons remain visible regardless of selected options count!
-
-## ✅ **LATEST UPDATE: SetupOverview Selected Items Display Enhancement - January 17, 2025** ✅
-
-**Issue:** User requested to remove the count display and format selected items as rounded boxes similar to the selection bubbles
-**Implementation:** Replaced text-based selected items display with visual pill/badge system
-**Changes Applied:**
-1. **Removed count display** - No longer shows "X selected:" prefix
-2. **Added visual pill display** - Selected items now appear as small rounded boxes in header
-3. **Consistent styling** - Pills match the design aesthetic of selection bubbles with purple theme
-4. **Smart truncation** - Shows up to 5 items with "+X more" indicator when needed
-5. **Cleaned up code** - Removed unused helper functions for text concatenation
-
-**Technical Implementation:**
-- ✅ **Visual pill display:** Selected items shown as `px-2 py-0.5 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30`
-- ✅ **Overflow handling:** Shows first 5 items with "+X more" badge when more than 5 selected
-- ✅ **Section-specific rendering:** Each section (genres, services, providers, broadcast) has dedicated pill rendering
-- ✅ **Responsive layout:** Uses `flex flex-wrap gap-1` for clean responsive pill arrangement
-- ✅ **Code cleanup:** Removed unused `getSelectedXXXNames()` helper functions and `selectedItems` properties
-
-**User Experience Impact:**
-- ✅ **Visual consistency** - Selected items now match the design language of selection bubbles
-- ✅ **Better readability** - Individual pills easier to read than comma-separated text
-- ✅ **Space efficient** - Visual pills take up less space than text descriptions
-- ✅ **Professional appearance** - Consistent purple theme throughout the interface
-- ✅ **Smart overflow** - Graceful handling of many selected items without text truncation issues
-
-**Status:** ✅ SETUPOVERVIEW SELECTED ITEMS DISPLAY ENHANCED - Selected preferences now appear as beautiful rounded pills in section headers!
-
-## ✅ **LATEST UPDATE: SetupOverview Pills With Icons Restored - January 17, 2025** ✅
-
-**Issue:** User requested to restore the icons/logos that appear to the left of text in streaming services and TV provider pills
-**Solution Applied:** Added back the service logos, provider logos, and broadcast emojis to the selected item pills
-**Implementation Details:**
-1. **Streaming Services pills** - Restored service logos (Netflix, Disney+, etc.) with 3x3 size and error handling
-2. **TV Provider pills** - Restored provider logos and emoji fallback for "other" provider
-3. **Live Broadcasting pills** - Added broadcast type emojis (🏆 for sports, 📰 for news, etc.)
-4. **Consistent layout** - All pills now use `flex items-center gap-1` with `w-3 h-3` icon containers
-5. **Error resilience** - Image error handling with `visibility: hidden` to maintain layout space
-
-**Technical Implementation:**
-- ✅ **Icon containers:** Added `w-3 h-3 flex items-center justify-center flex-shrink-0` containers for all icons
-- ✅ **Service logos:** Restored with `w-3 h-3 rounded object-contain` styling and error handling
-- ✅ **Provider logos:** Same logo treatment with emoji fallback for "other" provider
-- ✅ **Broadcast emojis:** Added emoji mapping logic matching the selection bubbles
-- ✅ **Consistent spacing:** Used `gap-1` between icon and text across all pill types
-
-**User Experience Impact:**
-- ✅ **Visual consistency** - Pills now match the icons shown in selection bubbles
-- ✅ **Brand recognition** - Service and provider logos maintain brand identity
-- ✅ **Icon clarity** - Smaller 3x3 icons perfect for compact pill format
-- ✅ **Layout stability** - Error handling prevents layout shifts when images fail to load
-- ✅ **Complete restoration** - All sections now have proper icons/emojis restored
-
-**Status:** ✅ SETUPOVERVIEW PILLS WITH ICONS COMPLETE - All selected item pills now display with proper logos and emojis!
-
-## ✅ **LATEST UPDATE: Dynamic Setup Complete Integration - January 17, 2025** ✅
-
-**Issue:** User requested to remove the separate Setup Complete screen and instead change the "Personalize Your Experience" text to "Setup Complete!" text after selecting at least one option from each section
-**Solution Applied:** Integrated dynamic title and subtitle changes directly into the SetupOverview component
-**Implementation Details:**
-1. **Removed Setup Complete screen** - Eliminated separate `SetupComplete` component from onboarding flow
-2. **Updated App.tsx flow** - Simplified onboarding from Welcome → Setup → Complete (no intermediate setup-complete step)
-3. **Added dynamic completion detection** - `allSectionsComplete` variable checks if all 4 sections have at least one selection
-4. **Dynamic title changes** - Title changes from "Personalize Your Experience" → "Setup Complete!" when all sections complete
-5. **Dynamic subtitle changes** - Subtitle changes to "You're all set! Start discovering amazing content." when complete
-6. **Dynamic button text** - Button changes from "Start Exploring Now" → "Start Discovering Content" when complete
-
-**Technical Changes:**
-- ✅ **App.tsx:** Removed 'setup-complete' onboarding step and SetupComplete component import
-- ✅ **SetupOverview.tsx:** Added `allSectionsComplete` completion detection logic
-- ✅ **Dynamic header:** Title and subtitle now change based on completion status
-- ✅ **Dynamic button:** Button text updates when all sections have selections
-- ✅ **Seamless flow:** Users see immediate feedback when they complete all sections
-
-**User Experience Flow:**
-1. **Welcome Screen** - Animated welcome with feature carousel
-2. **Personalize Your Experience** - Interactive preference selection with dynamic completion
-   - Initially shows: "Personalize Your Experience" / "These steps help us recommend better content for you"
-   - After completion: "Setup Complete!" / "You're all set! Start discovering amazing content."
-   - Button changes: "Start Exploring Now" → "Start Discovering Content"
-3. **Main App** - Full StreamGuide application
-
-**Completion Requirements:**
-- ✅ **At least one Favorite Genre** selected
-- ✅ **At least one Streaming Service** selected  
-- ✅ **At least one TV Provider** selected
-- ✅ **At least one Live Broadcasting** category selected
-
-**Status:** ✅ DYNAMIC SETUP COMPLETE INTEGRATION SUCCESSFUL - Setup screen now provides immediate feedback and eliminates separate completion screen!
-
-## ✅ **LATEST FIX: Onboarding to Main App Black Screen Issue - January 17, 2025** ✅
-
-**Issue:** Screen goes black after clicking "Start Discovering Content" / "Start Exploring Now" button on SetupOverview screen
-**Root Cause:** Onboarding completion flow wasn't properly transitioning to main application interface
-**Solution Applied:** Enhanced onboarding completion handler with proper state management and debugging
-**Implementation Details:**
-1. **Enhanced handleStartDiscovering function** - Added explicit activeTab state setting to ensure app starts on home tab
-2. **Added comprehensive debugging** - Console logs track entire onboarding completion flow
-3. **Improved state management** - Ensured proper state transitions from setup to main app
-4. **Added render debugging** - Track main app render, content render, and HomePage component loading
-
-**Technical Changes:**
-- ✅ **handleStartDiscovering:** Now explicitly sets activeTab to 'home' after completing onboarding
-- ✅ **Added debugging logs:** Track button click, state updates, main app render, and component loading
-- ✅ **Enhanced flow tracking:** Console logs show complete onboarding → main app transition
-- ✅ **State management:** Proper coordination between onboardingStep and activeTab states
-
-**Expected User Experience:**
-1. **Setup Complete:** User completes preference selection and sees "Setup Complete!" message
-2. **Button Click:** User clicks "Start Discovering Content" button
-3. **Transition:** App transitions smoothly to main application interface
-4. **Home Tab:** User lands on Home tab with content sections visible
-5. **Navigation:** Full app navigation (Home, Live, Watchlist, Remote) available
-
-**Debug Flow:**
-- ✅ **Button Click:** `🚀 Starting main app - onboarding complete`
-- ✅ **State Update:** `✅ Onboarding complete, should render main app now`
-- ✅ **Main App Render:** `🏠 Rendering main app - onboarding step: complete, active tab: home`
-- ✅ **Content Render:** `📱 Rendering main content - activeTab: home, showAIResults: false`
-- ✅ **HomePage Load:** `🏠 Rendering HomePage component`
-
-**Status:** ✅ ONBOARDING TO MAIN APP TRANSITION FIXED - Users will now properly enter the main application after setup completion!
-
-## ✅ **LATEST CRITICAL FIX: Black Screen After Setup Complete Resolved - January 17, 2025** ✅
-
-**Issue:** Screen still going black after clicking "Start Discovering Content" / "Start Exploring Now" button
-**Root Cause:** App.tsx was missing conditional logic to handle the 'complete' onboarding step - main app render was executing regardless of onboarding state
-**Critical Discovery:** The app had early returns for 'welcome' and 'setup' steps, but no logic to ensure main app only renders when onboarding is 'complete'
-**Solution Applied:** Added explicit check to only render main app when `onboardingStep === 'complete'`
-**Implementation Details:**
-1. **Added onboarding completion guard** - Main app only renders when onboarding step is 'complete'
-2. **Enhanced debugging** - Added console logs to track onboarding state transitions
-3. **Fallback loading state** - Shows loading spinner when onboarding step is not complete
-4. **Proper state flow** - Ensures clean transition from setup to main application
-
-**Technical Changes:**
-- ✅ **App.tsx:** Added `if (onboardingStep !== 'complete')` guard before main app render
-- ✅ **Debug logging:** Added logs to track onboarding state and main app rendering
-- ✅ **Loading fallback:** Proper loading state when onboarding not complete
-- ✅ **State management:** Proper coordination between onboarding step and main app
-
-**Expected User Flow:**
-1. **Setup Complete:** User completes preferences and sees "Setup Complete!" message
-2. **Button Click:** User clicks "Start Discovering Content" button
-3. **State Update:** handleStartDiscovering sets onboardingStep to 'complete'
-4. **Main App Render:** App checks onboardingStep === 'complete' and renders main application
-5. **HomePage Display:** User sees HomePage with content sections and navigation
-
-**Status:** ✅ CRITICAL BLACK SCREEN ISSUE RESOLVED - Main app will now properly render after setup completion!
-
-## ✅ **LATEST UPDATE: Streaming Service Logos Implementation - January 17, 2025** ✅
-
-**Issue:** User not seeing streaming service logos in the application - emojis were used instead of actual brand logos
-**Solution Applied:** Downloaded and implemented real streaming service logos from provided sources
-**Implementation Details:**
-1. **Logo Download:** Successfully downloaded logos for 8 major streaming services using `scripts/download-logos.js`
-2. **Asset Organization:** Moved logos to `public/images/logos/` for proper Vite accessibility
-3. **Configuration Update:** Updated `src/constants/streamingServices.ts` to use local logo paths instead of emojis
-4. **Fallback Handling:** Maintained emoji fallbacks for services without downloaded logos (Crunchyroll, Starz)
-
-**Downloaded Logos:**
-- ✅ **Netflix:** logo.ico + fallback.png
-- ✅ **Amazon Prime Video:** logo.png  
-- ✅ **Disney+:** logo.png
-- ✅ **Hulu:** logo.png
-- ✅ **Max (HBO Max):** logo.png
-- ✅ **Apple TV+:** logo.png + fallback.png + fallback.ico
-- ✅ **Peacock:** logo.png
-- ✅ **Paramount+:** logo.jpg
-
-**Technical Implementation:**
-- ✅ **Logo Sources:** Downloaded from official sources and CDNs using automated script
-- ✅ **Public Assets:** Moved to `public/images/logos/` directory for direct URL access
-- ✅ **Configuration:** Updated logo paths from emoji (🔴, 📦, 🏰) to actual image URLs (`/images/logos/netflix/logo.ico`)
-- ✅ **Error Handling:** Maintained existing error handling for logo loading failures
-- ✅ **Performance:** Local assets provide faster loading than external CDN URLs
-
-**User Experience Impact:**
-- ✅ **Brand Recognition:** Users now see authentic Netflix, Disney+, Apple TV+ and other official logos
-- ✅ **Professional Appearance:** Real brand logos instead of emoji placeholders
-- ✅ **Consistent Display:** All logos properly sized and formatted for UI components
-- ✅ **Setup Overview Integration:** Logos now appear in preference selection bubbles and header pills
-- ✅ **Streaming Services:** Brand logos visible throughout the application interface
-
-**Status:** ✅ STREAMING SERVICE LOGOS IMPLEMENTED - Real brand logos now display throughout the application!
-
-## ✅ **LATEST UPDATE: Complete Logo Implementation - Starz, Crunchyroll & TV Providers - January 17, 2025** ✅
-
-**Issue:** User requested download and implementation of missing Starz and Crunchyroll logos, plus TV provider logos
-**Solution Applied:** Downloaded and implemented comprehensive logo library for all streaming services and TV providers
-**Implementation Details:**
-1. **Enhanced Download Script:** Updated `scripts/download-logos.js` to include all missing logos
-   - Added Starz logo from Google Play URL (162KB high-quality PNG)
-   - Added Crunchyroll logo from Google Play URL (25KB optimized PNG)
-   - Added 9 TV provider logos (Xfinity, DIRECTV, Spectrum, DISH, etc.)
-2. **Logo Organization:** Successfully downloaded and organized all logos in `public/images/logos/` structure
-3. **Configuration Updates:**
-   - Updated `src/constants/streamingServices.ts` - Replaced emoji (⭐, 🍥) with real logos
-   - Updated `src/data/tvProviders.ts` - Replaced external URLs with local logo paths
-4. **Quality Assurance:** All logos properly sized and formatted for UI components
-
-**Logo Inventory Complete:**
-- ✅ **Streaming Services (10 total):** All services now have authentic brand logos
-  - Netflix, Prime Video, Disney+, Hulu, Max, Apple TV+, Peacock, Paramount+ ✅ (existing)
-  - **Starz** ✅ (newly downloaded - 162KB high-quality PNG)
-  - **Crunchyroll** ✅ (newly downloaded - 25KB optimized PNG)
-- ✅ **TV Providers (9 total):** All providers now have branded logos
-  - **Xfinity, DIRECTV, Spectrum, DISH, Verizon Fios, Cox, Optimum, YouTube TV** ✅ (newly downloaded)
-  - **AT&T U-verse** ✅ (downloaded from alternative source due to 403 error)
-
-**Technical Implementation:**
-- ✅ **Asset Organization:** All logos properly placed in `public/images/logos/` for Vite access
-- ✅ **Configuration Sync:** Streaming services and TV providers updated to use local paths
-- ✅ **Error Handling:** Maintained existing image error handling for graceful fallbacks
-- ✅ **Performance:** Local assets provide faster loading than external CDN URLs
-- ✅ **Consistency:** All logos properly formatted for SetupOverview and other components
-
-**User Experience Impact:**
-- ✅ **Brand Recognition:** Users see authentic brand logos throughout the application
-- ✅ **Professional Appearance:** No more emoji placeholders - all real brand assets
-- ✅ **Setup Overview Enhancement:** Both streaming services and TV providers show proper logos
-- ✅ **Performance Improvement:** Local assets load faster than external images
-- ✅ **Consistent Display:** All logos properly sized and formatted for pill/bubble components
-
-**Status:** ✅ COMPLETE LOGO LIBRARY IMPLEMENTED - All streaming services and TV providers now display authentic brand logos!
-
-## ✅ **LATEST UPDATE: SetupOverview Preference Options Customized - January 17, 2025** ✅
-
-**Issue:** User requested specific changes to preference selection options in SetupOverview "Personalize Your Experience" interface
-**Changes Requested:**
-- Remove specific genres, streaming services, TV providers
-- Rename "News" to "News & Politics" in Live Broadcasting
-
-**Customizations Applied:**
-1. **🎭 Favorite Genres (Removed 6 options):**
-   - ❌ Removed: Music, Science Fiction, Soap, Talk, War, War & Politics
-   - ✅ Kept: Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Mystery, Romance, Thriller, Western, Action & Adventure, Kids, News, Reality, Sci-Fi & Fantasy
-
-2. **📺 Streaming Services (Removed 5 options):**
-   - ❌ Removed: Cinemax, Funimation, Showtime, YouTube TV, Tubi
-   - ✅ Kept: Netflix, Amazon Prime Video, Disney+, Hulu, Max, Apple TV+, Peacock, Paramount+, Crunchyroll, Starz
-
-3. **📡 TV Provider (Removed 2 options):**
-   - ❌ Removed: Hulu + Live TV, Other
-   - ✅ Kept: Xfinity, DIRECTV, AT&T U-verse, YouTube TV, Spectrum, DISH Network, Verizon Fios, Cox Communications, Optimum
-
-4. **📻 Live Broadcasting (Renamed 1 option):**
-   - 🔄 Renamed: "News" → "News & Politics"
-   - ✅ All other options unchanged: Sports, Awards Shows, Reality TV, Competition Shows, Game Shows, Music Events, Talk Shows, Weather, Religious, Ceremonies
-
-**Technical Implementation:**
-- ✅ **src/constants/genres.ts:** Removed 6 unwanted genre options
-- ✅ **src/constants/streamingServices.ts:** Removed 5 streaming service options
-- ✅ **src/data/tvProviders.ts:** Removed 2 TV provider options (including "Other" fallback)
-- ✅ **src/constants/broadcastTypes.ts:** Updated "News" to "News & Politics"
-
-**User Experience Impact:**
-- ✅ **Cleaner selections** - Focused on most relevant/popular options
-- ✅ **Better categorization** - "News & Politics" more descriptive than just "News"
-- ✅ **Streamlined interface** - Fewer options reduce decision fatigue
-- ✅ **Maintained functionality** - All selection and interaction features working perfectly
-
-**Status:** ✅ PREFERENCE OPTIONS CUSTOMIZED - SetupOverview now shows exactly the requested options for user selection!
-
-## ✅ **LATEST UPDATE: AT&T U-verse Logo Successfully Downloaded and Fixed - January 17, 2025** ✅
-
-**Issue:** AT&T U-verse logo not displaying properly in SetupOverview TV provider selection
-**Root Cause:** HTML file was saved instead of actual image file when logo was downloaded
-**Solution Applied:** Successfully downloaded official AT&T U-verse logo from provided URL and replaced broken file
-
-**Technical Fix:**
-- ✅ **Problem Identified:** `logo.png` was actually HTML document (16KB) instead of image file
-- ✅ **File Diagnosis:** Used `file` command to confirm HTML document instead of proper image
-- ✅ **Incorrect File Removed:** Deleted HTML file to clear path for correct image
-- ✅ **Logo Downloaded:** Successfully downloaded from https://deadline.com/wp-content/uploads/2016/02/att-u-verse1.jpg?w=1024
-- ✅ **File Verified:** Confirmed proper JPEG image file (1024x761 pixels, 20.8KB)
-
-**Logo Details:**
-- ✅ **Source:** Official AT&T U-verse logo from Deadline.com (high-quality JPEG)
-- ✅ **Location:** `public/images/logos/att-uverse/logo.png` (now contains proper image file)
-- ✅ **Configuration:** Already properly configured in `src/data/tvProviders.ts`
-- ✅ **Integration:** Will now appear correctly in SetupOverview TV provider selection and preference pills
-- ✅ **File Size:** 20,843 bytes (20.8KB) - optimal size for web display
-- ✅ **Dimensions:** 1024x761 pixels - high-quality resolution
-
-**Complete Logo Library Status:**
-- ✅ **Streaming Services (10 total):** All services with authentic brand logos  
-- ✅ **TV Providers (9 total):** All providers with branded logos including properly working AT&T U-verse logo
-
-**User Experience Impact:**
-- ✅ **Complete branding** - All TV providers now have official working logos
-- ✅ **Professional appearance** - High-quality AT&T U-verse branding fully integrated
-- ✅ **Brand recognition** - Users see authentic AT&T logo in TV provider selection
-- ✅ **Logo library complete** - All major streaming services and TV providers now functioning
-
-**Status:** ✅ AT&T U-VERSE LOGO SUCCESSFULLY FIXED - Logo library now 100% complete and fully functional!
-
-## ✅ **LATEST UPDATE: BoltBadge Integration to Onboarding Screens - January 17, 2025** ✅
-
-**Request:** User wanted to showcase the BoltBadge in the welcome screen and personalize your experience screen
-**Solution Applied:** Added BoltBadge component to both onboarding screens with proper positioning
-**Implementation Details:**
-1. **Added BoltBadge to WelcomeScreen.tsx** - Imported and included BoltBadge component
-2. **Added BoltBadge to SetupOverview.tsx** - Imported and included BoltBadge component  
-3. **Maintained consistent positioning** - BoltBadge uses fixed positioning in bottom-right corner
-4. **Glass morphism design preserved** - BoltBadge retains its elegant backdrop-blur styling
-5. **Accessibility maintained** - Proper hover states and tooltip functionality
-
-**Technical Changes:**
-- ✅ **WelcomeScreen.tsx:** Added `import BoltBadge from './shared/BoltBadge'` and `<BoltBadge />` component
-- ✅ **SetupOverview.tsx:** Added `import BoltBadge from './shared/BoltBadge'` and `<BoltBadge />` component
-- ✅ **Fixed positioning:** BoltBadge appears consistently in bottom-right corner of both screens
-- ✅ **z-index management:** Badge appears above other content with proper layering
-- ✅ **Hover interactions:** Tooltip and animation effects work properly on both screens
-
-**User Experience Benefits:**
-- 🏷️ **Brand attribution** - BoltBadge prominently displays "Made with Bolt" throughout onboarding
-- ✨ **Consistent branding** - Badge appears on all key user-facing screens
-- 🎨 **Elegant design** - Glass morphism styling complements the purple-themed UI
-- 🔗 **Direct link** - Badge links to bolt.new for easy access
-- 📱 **Responsive design** - Badge scales appropriately on mobile devices
-
-**Badge Features:**
-- **Glass morphism container** with backdrop blur and border effects
-- **Hover animations** with scale and opacity transitions
-- **Tooltip on hover** showing "Made with Bolt" with arrow pointer
-- **Subtle glow effect** with purple accent on hover
-- **Direct link** to https://bolt.new with proper target="_blank"
-
-**Status:** ✅ BOLTBADGE INTEGRATION COMPLETE - Now showcased on both welcome screen and personalize experience screen!
-
-## Recently Completed Tasks
-
-### ✅ Actor Search Enhancement & UI Improvements (Latest)
-**Status: COMPLETED** ✅
-- **Simplified Actor Display**: Removed "Known For" and "Recent Work" sections from actor cards in both SearchBar and SearchResults components for cleaner UI
-- **Reordered Search Sections**: Changed section order in SearchResults to: Movies → TV Shows → Actors (actors now appear last)
-- **Fixed Top Results Ordering**: Updated SearchBar "Top Results" filter to prioritize content - now shows Movies → TV Shows → Actors instead of Actors first
-- **Streamlined Actor Cards**: Simplified actor display to show only essential information (name, department, popularity) with clean profile images
-- **Fixed Linter Errors**: Removed non-existent `includeNetworkContent` option from ML search service calls
-- **Improved Visual Hierarchy**: Enhanced section ordering provides better content prioritization in search results
-- **Enhanced UX**: Cleaner, less cluttered actor display improves overall search experience
-
-### ✅ Enhanced Actor Search Implementation (Previous)
-**Status: COMPLETED** ✅
-- **ML Search Integration**: Successfully integrated actor search into ML search service with proper person entity recognition
-- **ActorDetailPage Fixes**: Resolved critical import issues and timeout type errors
-- **SearchResults Enhancement**: Complete rewrite to handle actor results with dedicated rendering and navigation
-- **Enhanced Actor Display**: Rich actor cards with profile images, popularity indicators, and department information  
-- **SearchBar Improvements**: Added enhanced actor rendering with filmography previews and interactive elements
-- **Debugging Infrastructure**: Comprehensive logging and debug tools for troubleshooting search pipeline
-
-### ✅ Error Resolution & Code Fixes
-**Status: COMPLETED** ✅
-- **ActorDetailPage.tsx**: Fixed missing `themeSettings` import and timeout type issues
-- **SearchResults Component**: Implemented proper actor handling with click navigation and modal integration
-- **ML Search Service**: Added missing `searchPeople` function and enhanced person search capabilities
-- **Type System**: Improved type conversion between PersonResult and SearchResult interfaces
-- **Performance**: Optimized actor search with limited filmography loading for top actors only
-
-### ✅ Search Quality Filtering Enhancement (Latest)
-**Status: COMPLETED** ✅
-- **Enhanced Actor Quality Filtering**: Added comprehensive filters to `searchPeople` function to remove low-quality actor entries:
-  - Name length validation (minimum 2 characters)
-  - Popularity threshold (minimum 0.5) to filter out obscure/test entries
-  - Known_for content validation (must have valid poster and title/name)
-  - Removal of placeholder names (test, unknown, n/a, tbd)
-  - Sort by popularity (highest first) and limited to top 10 results
-- **Enhanced Content Quality Filtering**: Added filters to `searchContentEnhanced` function for movies/TV shows:
-  - Must have poster_path for visual display
-  - Title/name validation (minimum 2 characters)
-  - Popularity threshold (minimum 0.1) to filter out very low-quality content
-  - Valid ID validation
-  - Removal of placeholder titles
-  - Sort by popularity for better results
-- **Improved Search Experience**: Eliminated single-letter actors, duplicate entries, and low-quality content from search results
-- **Performance Optimization**: Reduced result limits while maintaining quality through better filtering
-
-### ✅ Actor Search Enhancement & UI Improvements
-**Status: COMPLETED** ✅
-- **Simplified Actor Display**: Removed "Known For" and "Recent Work" sections from actor cards in both SearchBar and SearchResults components for cleaner UI
-- **Reordered Search Sections**: Changed section order in SearchResults to: Movies → TV Shows → Actors (actors now appear last)
-- **Fixed Top Results Ordering**: Updated SearchBar "Top Results" filter to prioritize content - now shows Movies → TV Shows → Actors instead of Actors first
-- **Streamlined Actor Cards**: Simplified actor display to show only essential information (name, department, popularity) with clean profile images
-- **Fixed Linter Errors**: Removed non-existent `includeNetworkContent` option from ML search service calls
-- **Improved Visual Hierarchy**: Enhanced section ordering provides better content prioritization in search results
-- **Enhanced UX**: Cleaner, more organized search interface with better content discovery flow
-
-## Technical Enhancements
-
-### 🔧 Search Infrastructure Improvements
-- **Quality-First Approach**: Implemented multi-layer filtering across all search functions
-- **Performance Optimization**: Better result limits and sorting algorithms
-- **Data Validation**: Comprehensive validation of API responses before displaying to users
-- **Error Handling**: Graceful fallbacks for low-quality or missing data
-
-### 🎯 User Experience Goals
-- **Clean Results**: No more single-letter actors or placeholder content
-- **Relevant Content**: Higher quality, more popular results prioritized
-- **Better Discovery**: Movies and TV shows prioritized over actors in general search
-- **Visual Consistency**: All results have proper poster images and complete metadata
-
-## Search Quality Metrics
-- **Actor Results**: Reduced from 15 to 10 high-quality results
-- **Minimum Popularity**: Actor threshold 0.5, Content threshold 0.1
-- **Data Completeness**: 100% of results have required fields (poster, title/name, valid ID)
-- **User Satisfaction**: Eliminated confusing single-letter and test entries
-
-## Implementation Notes
-- Enhanced filtering maintains backward compatibility
-- Quality thresholds can be adjusted based on user feedback
-- Performance impact is minimal due to client-side filtering
-- TypeScript type safety maintained throughout
-
-## Next Steps
-- Monitor user feedback on search quality
-- Consider implementing user-configurable quality thresholds
-- Explore caching mechanisms for improved performance
-- Add analytics to track search result engagement
-
-## Current Focus
-
-### 🔧 Search System Optimization (In Progress)
-- **UI Refinements**: Recently simplified actor display and improved section ordering
-- **Performance Monitoring**: Tracking search response times and user interaction patterns  
-- **User Testing**: Gathering feedback on simplified actor interface and section reorganization
-
-## Next Priority Tasks
-
-### 📋 User Experience Improvements
-1. **Search Performance**: Further optimize search speed and result relevance
-2. **Mobile Responsiveness**: Ensure actor search works well on mobile devices
-3. **Accessibility**: Add proper ARIA labels and keyboard navigation support
-4. **User Feedback**: Implement user preference settings for search result ordering
-
-### 📋 Feature Enhancements  
-1. **Advanced Filters**: Add filtering options for actors (by popularity, genre, etc.)
-2. **Search History**: Improve search history with better categorization
-3. **Recommendation Engine**: Enhance content recommendations based on actor preferences
-4. **Social Features**: Add ability to share favorite actors and create custom lists
-
-## Technical Debt
-
-### 🔨 Code Quality
-- **Test Coverage**: Add comprehensive tests for actor search functionality
-- **Performance Metrics**: Implement detailed search performance tracking
-- **Error Handling**: Enhance error handling for edge cases in actor search
-- **Documentation**: Update component documentation with latest changes
-
-### 🔨 Architecture
-- **State Management**: Consider centralizing search state management
-- **Component Optimization**: Further optimize re-rendering in search components  
-- **Bundle Optimization**: Analyze and optimize JavaScript bundle size
-- **Caching Strategy**: Implement better caching for actor filmography data
-
-## Known Issues
-
-### ⚠️ Minor Issues
-- **Search Edge Cases**: Some very specific actor name searches may need refinement
-- **Loading States**: Enhance loading states for better user feedback during searches
-- **Memory Management**: Monitor memory usage during intensive search sessions
-
-## Deployment Status
-
-### 🚀 Production Ready
-- **Actor Search**: Core actor search functionality is stable and ready for production
-- **UI Components**: All search-related UI components are polished and user-tested
-- **Performance**: Search performance meets acceptable thresholds for production use
-- **Error Handling**: Robust error handling ensures graceful degradation in edge cases
-
-## Metrics & Success Criteria
-
-### 📊 Current Performance
-- **Search Response Time**: < 300ms for typical queries
-- **Actor Search Accuracy**: High relevance for popular actor searches  
-- **UI Responsiveness**: Smooth interactions across all device types
-- **Error Rate**: < 1% for standard search operations
-
-### 🎯 Success Metrics
-- **User Engagement**: Track actor profile views and interaction rates
-- **Search Satisfaction**: Monitor search result click-through rates
-- **Performance Benchmarks**: Maintain fast search response times
-- **Feature Adoption**: Track usage of different search result sections
-
----
-
-*Last Updated: [Current Date]*
-*Next Review: Weekly*
-
-## Recently Completed Tasks
-
-### ✅ Enhanced Actor Search & Real-Time Discovery (Latest)
-**Status: COMPLETED** ✅
-- **Advanced Name Matching**: Implemented comprehensive search variations for better actor discovery:
-  - Spelling correction (micheal → michael, machael → michael, etc.)
-  - Middle initial handling ("michael b jordan" → "michael jordan", "michael b. jordan")
-  - Partial name matching (first + last name combinations)
-  - Fuzzy matching with Levenshtein distance algorithm
-  - Word-based similarity scoring for better relevance
-- **Multi-Strategy Search**: Enhanced `searchPeople` function with:
-  - Multiple search variation attempts per query
-  - Deduplication across search strategies
-  - Relevance scoring based on name similarity + popularity
-  - Increased result limit to 12 high-quality actors
-- **Intelligent Query Analysis**: Upgraded ML search service to:
-  - Better detect actor/person name patterns 
-  - Dynamically allocate more results (60% vs 30%) for actor-focused searches
-  - Enhanced entity recognition for person names
-  - Pattern matching for common actor name formats
-- **Real-Time Responsiveness**: Optimized search experience:
-  - Reduced debounce delay from 300ms to 200ms for faster response
-  - Dynamic result allocation (16 results for actor searches vs 12 for general)
-  - Increased actor display limit (8 actors for actor searches vs 5 for general)
-  - Smart actor search detection in UI components
-- **Enhanced Actor Discovery**: Improved actor result display:
-  - More actors shown when search appears actor-focused
-  - Better relevance scoring prioritizes exact and fuzzy matches
-  - Enhanced search logging for debugging and optimization
-
-### ✅ Search Quality Filtering Enhancement
-**Status: COMPLETED** ✅
-- **Enhanced Actor Quality Filtering**: Added comprehensive filters to `searchPeople` function to remove low-quality actor entries:
-  - Name length validation (minimum 2 characters)
-  - Popularity threshold (minimum 0.5) to filter out obscure/test entries
-  - Known_for content validation (must have valid poster and title/name)
-  - Removal of placeholder names (test, unknown, n/a, tbd)
-  - Sort by popularity (highest first) and limited to top 10 results
-- **Enhanced Content Quality Filtering**: Added filters to `searchContentEnhanced` function for movies/TV shows:
-  - Must have poster_path for visual display
-  - Title/name validation (minimum 2 characters)
-  - Popularity threshold (minimum 0.1) to filter out very low-quality content
-  - Valid ID validation
-  - Removal of placeholder titles
-  - Sort by popularity for better results
-- **Improved Search Experience**: Eliminated single-letter actors, duplicate entries, and low-quality content from search results
-- **Performance Optimization**: Reduced result limits while maintaining quality through better filtering
-
-### ✅ Actor Search Enhancement & UI Improvements
-**Status: COMPLETED** ✅
-- **Simplified Actor Display**: Removed "Known For" and "Recent Work" sections from actor cards in both SearchBar and SearchResults components for cleaner UI
-- **Reordered Search Sections**: Changed section order in SearchResults to: Movies → TV Shows → Actors (actors now appear last)
-- **Fixed Top Results Ordering**: Updated SearchBar "Top Results" filter to prioritize content - now shows Movies → TV Shows → Actors instead of Actors first
-- **Streamlined Actor Cards**: Simplified actor display to show only essential information (name, department, popularity) with clean profile images
-- **Fixed Linter Errors**: Removed non-existent `includeNetworkContent` option from ML search service calls
-- **Improved Visual Hierarchy**: Enhanced section ordering provides better content prioritization in search results
-- **Enhanced UX**: Cleaner, more organized search interface with better content discovery flow
-
-## Technical Enhancements
-
-### 🔧 Advanced Search Infrastructure
-- **Fuzzy Matching Algorithm**: Implemented Levenshtein distance for spell-tolerance
-- **Multi-Variation Search**: Try up to 5 different search variations per query
-- **Smart Result Allocation**: Dynamic allocation based on query type detection
-- **Enhanced Scoring System**: Combined popularity + name similarity for optimal ranking
-- **Performance Optimization**: Intelligent API call limits and result caching
-
-### 🎯 Actor Discovery Improvements
-- **Real-Time Detection**: Instant recognition of actor-focused searches
-- **Spelling Tolerance**: Handles common misspellings and variations
-- **Name Pattern Recognition**: Detects first+middle+last name combinations
-- **Partial Matching**: Works with incomplete names (e.g., "mic" → "Michael B. Jordan")
-- **Quality Assurance**: Only shows actors with complete profiles and filmography
-
-### 📊 Enhanced Search Metrics
-- **Actor Results**: 8-12 high-quality results for actor searches (vs 3-5 previously)
-- **Response Time**: 200ms debounce for faster feedback
-- **Search Variations**: Up to 5 intelligent query variations per search
-- **Relevance Scoring**: Multi-factor algorithm considering name similarity + popularity
-- **Success Rate**: Dramatically improved actor discovery for partial/misspelled names
-
-## Use Cases Now Supported
-✅ **"micheal b jordan"** → Finds "Michael B. Jordan" via spelling correction  
-✅ **"michael b"** → Shows "Michael B. Jordan" and other "Michael B" actors  
-✅ **"tom cruise"** → Instant results with fuzzy matching  
-✅ **"scarlet"** → Finds "Scarlett Johansson" via partial matching  
-✅ **"leo"** → Shows "Leonardo DiCaprio" via common name detection  
-✅ **"will smith"** → Multiple Will Smith actors with relevance ranking  
-
-## Performance Impact
-- **Positive**: 33% faster response time (200ms vs 300ms)
-- **Neutral**: Minimal increase in API calls due to intelligent caching
-- **Optimization**: Better result quality with fewer total results displayed
-
-## Next Steps
-- Monitor user engagement with improved actor search
-- Consider implementing autocomplete suggestions
-- Add analytics for search pattern optimization
-- Explore voice search integration for actor names
-
-### ✅ Fixed StandardizedSectionContainer Runtime Error (Latest)
-**Status: COMPLETED** ✅
-- **Fixed openTrailer Function Call**: Corrected the `openTrailer` function calls to use the proper parameter format (trailerKey, title, mediaType) instead of object format
-- **Fixed isTrailerActive Function**: Replaced incorrect boolean usage with proper function implementation to check if specific trailers are active
-- **Fixed Media Type Validation**: Added proper type casting for `media_type` to only pass 'movie' or 'tv' to openTrailer, filtering out 'person' type
-- **Fixed toggleMute Function**: Ensured proper implementation of toggleMute function calling the onToggleMute prop
-- **Runtime Error Resolution**: Fixed "This expression is not callable. Type 'Boolean' has no call signatures" errors
-- **Build Success**: All linter errors resolved, build completes successfully
-- **Enhanced Error Handling**: Improved type safety and function signature matching throughout the component
-
-## ✅ **LATEST FIX: ActorDetailPage Dropdown Toggle Fixed - January 18, 2025** ✅
-
-**Issue:** Actor page dropdown could expand but not collapse when clicking the button to put it back up
-**Root Cause:** `handleExpandToggle` function was calling `expandSection(sectionId)` which always sets section to expanded, rather than toggling the state
-**Solution Applied:** Changed to use `toggleSection(sectionId)` for proper toggle functionality
-**Implementation Details:**
-1. **Fixed toggle function** - Changed from `expandSection(sectionId)` to `toggleSection(sectionId)` in `handleExpandToggle`
-2. **Added missing import** - Added `toggleSection` to the destructured imports from `useSectionExpansion()` hook
-3. **Verified toggle behavior** - Dropdown now properly expands and collapses with button clicks
-
-**Technical Changes:**
-- ✅ **StandardizedSectionContainer.tsx:** Fixed `handleExpandToggle` to use `toggleSection` instead of `expandSection`
-- ✅ **Import fix:** Added `toggleSection` to the `useSectionExpansion` hook destructuring
-- ✅ **Toggle functionality:** Dropdown button now works both directions (expand/collapse)
-
-**User Experience Impact:**
-- ✅ **Dropdown works both ways** - Can expand and collapse sections properly
-- ✅ **Visual feedback** - Chevron icon accurately reflects section state (up when expanded, down when collapsed)
-- ✅ **Consistent behavior** - Matches expected dropdown behavior throughout the application
-- ✅ **Actor page functional** - Movies and TV Shows sections can be properly expanded and collapsed
-
-**Status:** ✅ ACTORDETAILPAGE DROPDOWN TOGGLE FIXED - Both expand and collapse functionality now working correctly!
+- ❌ **Database connection killing server** - Pool error handler calling `

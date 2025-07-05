@@ -111,38 +111,27 @@ const AISearchResultsPage: React.FC<AISearchResultsPageProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white">
-        <header className="fixed top-0 left-0 right-0 bg-toolbar border-b toolbar-height toolbar-padding z-40">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid items-center gap-4 h-full grid-cols-[auto_1fr_auto]">
-              <div className="flex justify-start">
-                <button
-                  onClick={onBack}
-                  className="p-2 hover:bg-toolbar-hover rounded-xl transition-colors text-gray-300 hover:text-white"
-                  aria-label="Go back"
-                >
-                  <div className="flex items-center space-x-2">
-                    <ArrowLeft className="w-6 h-6" />
-                    <span className="text-sm font-medium">Back</span>
-                  </div>
-                </button>
-              </div>
-              
-              <div className="flex justify-center px-4">
-                <div className="flex items-center space-x-2">
-                  <Wand2 className="w-5 h-5 text-purple-400 animate-pulse" />
-                  <h1 className="text-xl font-bold text-white">AI Search</h1>
-                </div>
-              </div>
-              
-              <div className="flex justify-end">
-                {/* Empty space for layout in loading state */}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="pt-[calc(60px+1rem)]">
+        <main className="pt-6 pb-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Back button and title */}
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={onBack}
+                className="flex items-center space-x-2 p-2 hover:bg-gray-800/50 rounded-xl transition-colors text-gray-300 hover:text-white"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="w-6 h-6" />
+                <span className="text-sm font-medium">Back</span>
+              </button>
+              
+              <div className="flex items-center space-x-2">
+                <Wand2 className="w-5 h-5 text-purple-400 animate-pulse" />
+                <h1 className="text-xl font-bold text-white">AI Search</h1>
+              </div>
+              
+              <div className="w-20"></div> {/* Spacer for alignment */}
+            </div>
+            
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
@@ -157,70 +146,56 @@ const AISearchResultsPage: React.FC<AISearchResultsPageProps> = ({
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-toolbar border-b toolbar-height toolbar-padding z-40">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid items-center gap-4 h-full grid-cols-[auto_1fr_auto]">
-            <div className="flex justify-start">
+      <main className="pt-6 pb-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back button and title */}
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-2 p-2 hover:bg-gray-800/50 rounded-xl transition-colors text-gray-300 hover:text-white"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-6 h-6" />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              <Wand2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
+              <h1 className="text-xl font-bold text-white truncate">{searchResult.query}</h1>
+            </div>
+            
+            {/* Filter dropdown */}
+            <div className="relative">
               <button
-                onClick={onBack}
-                className="p-2 hover:bg-toolbar-hover rounded-xl transition-colors text-gray-300 hover:text-white"
-                aria-label="Go back"
+                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                className="flex items-center space-x-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl px-4 py-2 text-gray-200 transition-colors border border-gray-800/20"
               >
-                <div className="flex items-center space-x-2">
-                  <ArrowLeft className="w-6 h-6" />
-                  <span className="text-sm font-medium">Back</span>
-                </div>
+                <Filter className="w-5 h-5" />
+                <span className="hidden sm:inline font-medium">
+                  {mediaFilter === 'all' ? 'All' : mediaFilter === 'movie' ? 'Movies' : 'TV Shows'}
+                </span>
               </button>
-            </div>
-            
-            <div className="flex justify-center px-4">
-              <div className="w-full" style={{ maxWidth: 'min(100vw - 6rem, 80rem)' }}>
-                <div className="flex items-center justify-center space-x-2">
-                  <Wand2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                  <h1 className="text-xl font-bold text-white truncate">{searchResult.query}</h1>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              {/* Filter dropdown - moved from content area to header */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                  className="flex items-center space-x-2 bg-toolbar-hover hover:bg-toolbar-hover rounded-xl px-4 py-2 text-gray-200 transition-colors border border-gray-800/20"
-                >
-                  <Filter className="w-5 h-5" />
-                  <span className="hidden sm:inline font-medium">
-                    {mediaFilter === 'all' ? 'All' : mediaFilter === 'movie' ? 'Movies' : 'TV Shows'}
-                  </span>
-                </button>
-                
-                {showFilterDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-toolbar rounded-xl shadow-xl z-50 border overflow-hidden">
-                    <div className="py-2">
-                      {['all', 'movie', 'tv'].map((filter) => (
-                        <button
-                          key={filter}
-                          onClick={() => handleFilterSelect(filter as 'all' | 'movie' | 'tv')}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-toolbar-hover transition-colors ${
-                            mediaFilter === filter ? 'text-purple-400' : 'text-gray-200'
-                          }`}
-                        >
-                          {filter === 'all' ? 'All Content' : filter === 'movie' ? 'Movies' : 'TV Shows'}
-                        </button>
-                      ))}
-                    </div>
+              
+              {showFilterDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-900 rounded-xl shadow-xl z-50 border border-gray-700 overflow-hidden">
+                  <div className="py-2">
+                    {['all', 'movie', 'tv'].map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => handleFilterSelect(filter as 'all' | 'movie' | 'tv')}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800/50 transition-colors ${
+                          mediaFilter === filter ? 'text-purple-400' : 'text-gray-200'
+                        }`}
+                      >
+                        {filter === 'all' ? 'All Content' : filter === 'movie' ? 'Movies' : 'TV Shows'}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </header>
 
-      <main className="pt-[calc(60px+1rem)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Toolbar - Layout switcher on right side to match see more pages */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center space-x-4">

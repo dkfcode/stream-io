@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Settings, Power, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Home, VolumeX, Volume1, Volume2, RotateCcw, HdmiPort as Hdmi, Asterisk, SkipBack, Play, Pause, SkipForward, RefreshCw, MousePointer, Keyboard, Grid3X3, Tv, Square, Gamepad2, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import SettingsPanel from './SettingsPanel';
 import { smartTVProxyService, type SmartTV } from '../services/smartTVProxyService';
+import { STREAMING_SERVICES } from '../constants/streamingServices';
 
 interface App {
   id: string;
@@ -1571,48 +1572,51 @@ const RemoteContent: React.FC = () => {
                 <div className="grid grid-cols-3 gap-3">
                   {installedApps.filter(app => app.isInstalled).map(app => {
                     const getAppLogo = (appId: string) => {
-                      // Map app IDs to service IDs  
+                      // Map app IDs to streaming service IDs  
                       const serviceMap: { [key: string]: string } = {
                         'netflix': 'netflix',
-                        'disney': 'disney',
+                        'disney': 'disney-plus',
                         'hulu': 'hulu',
-                        'prime': 'prime',
-                        'hbo': 'max',
-                        'apple': 'apple',
+                        'prime': 'amazon-prime',
+                        'hbo': 'hbo-max',
+                        'apple': 'apple-tv',
                         'peacock': 'peacock',
-                        'paramount': 'paramount'
+                        'paramount': 'paramount-plus'
                       };
                       
                       const serviceId = serviceMap[appId];
                       
                       if (serviceId) {
-                        return (
-                          <div className="relative">
-                            <img 
-                              src={`/src/assets/images/logos/${serviceId === 'prime' ? 'prime-video' : serviceId === 'disney' ? 'disney-plus' : serviceId === 'paramount' ? 'paramount-plus' : serviceId === 'apple' ? 'apple-tv' : serviceId}/logo.${serviceId === 'netflix' ? 'ico' : serviceId === 'paramount' ? 'jpg' : 'png'}`}
-                              alt={app.name}
-                              className="w-12 h-12 rounded-lg object-cover"
-                              onError={(e) => {
-                                // Fallback to emoji icon if local logo fails
-                                e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                            <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center hidden">
-                              <span className="text-white text-lg">
-                                {serviceId === 'netflix' ? '🔴' : 
-                                 serviceId === 'disney' ? '🏰' : 
-                                 serviceId === 'hulu' ? '💚' : 
-                                 serviceId === 'prime' ? '📦' : 
-                                 serviceId === 'max' ? '👑' : 
-                                 serviceId === 'apple' ? '🍎' : 
-                                 serviceId === 'peacock' ? '🦚' : 
-                                 serviceId === 'paramount' ? '⭐' : '📱'}
-                              </span>
+                        const service = STREAMING_SERVICES.find(s => s.id === serviceId);
+                        if (service) {
+                          return (
+                            <div className="relative">
+                              <img 
+                                src={service.logo}
+                                alt={app.name}
+                                className="w-12 h-12 rounded-lg object-cover"
+                                onError={(e) => {
+                                  // Fallback to emoji icon if local logo fails
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = 'flex';
+                                }}
+                              />
+                              <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center hidden">
+                                <span className="text-white text-lg">
+                                  {serviceId === 'netflix' ? '🔴' : 
+                                   serviceId === 'disney-plus' ? '🏰' : 
+                                   serviceId === 'hulu' ? '💚' : 
+                                   serviceId === 'amazon-prime' ? '📦' : 
+                                   serviceId === 'hbo-max' ? '👑' : 
+                                   serviceId === 'apple-tv' ? '🍎' : 
+                                   serviceId === 'peacock' ? '🦚' : 
+                                   serviceId === 'paramount-plus' ? '⭐' : '📱'}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        );
+                          );
+                        }
                       }
 
                       // Custom icons for other apps
