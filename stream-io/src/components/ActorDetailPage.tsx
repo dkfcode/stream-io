@@ -8,7 +8,6 @@ import StandardizedFavoriteButton from './StandardizedFavoriteButton';
 import StandardizedSeeMorePage from './shared/StandardizedSeeMorePage';
 import StandardizedSectionContainer from './shared/StandardizedSectionContainer';
 import StandardizedThumbnail from './shared/StandardizedThumbnail';
-import { useTrailer } from '../stores/uiStore';
 
 interface ActorDetailPageProps {
   actor: PersonResult;
@@ -16,7 +15,7 @@ interface ActorDetailPageProps {
 }
 
 const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
-  const { effectiveTheme, themeSettings } = useTheme();
+  const { themeSettings } = useTheme();
   const [filmography, setFilmography] = useState<{ movies: SearchResult[], shows: SearchResult[] }>({ movies: [], shows: [] });
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<SearchResult | null>(null);
@@ -42,14 +41,10 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [isTextPermanentlyVisible, setIsTextPermanentlyVisible] = useState(false);
   
-  const timeoutRefs = useRef<Record<number, NodeJS.Timeout>>({});
-  const videoRefs = useRef<Record<number, HTMLIFrameElement | null>>({});
   const manualControlTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textFadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Watchlist store methods moved to StandardizedFavoriteButton component
-
-  const { openTrailer, closeTrailer } = useTrailer();
 
   useEffect(() => {
     const fetchFilmography = async () => {
@@ -125,34 +120,14 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
       setIsTextVisible(true);
       setIsTextPermanentlyVisible(false);
       
-      // Clear existing trailers and stop any active ones
-      Object.values(timeoutRefs.current).forEach(timeout => {
-        if (timeout) clearTimeout(timeout);
-      });
-      // Stop any currently active trailers for this section
-      if (Object.keys(showTrailer).length > 0) {
-        closeTrailer();
-      }
-      setShowTrailer({});
-      
       // Clear text fade timeout
       if (textFadeTimeoutRef.current) {
         clearTimeout(textFadeTimeoutRef.current);
         textFadeTimeoutRef.current = null;
       }
       
-      const currentContent = filmography[expandedSection][currentSlide];
-      
-      // Start trailer for first slide after 5 seconds (only if autoplay is enabled)
-      if (themeSettings.autoplayVideos && currentContent && trailerKeys[currentContent.id]) {
-        timeoutRefs.current[currentContent.id] = setTimeout(() => {
-          openTrailer({ 
-            videoKey: trailerKeys[currentContent.id], 
-            title: currentContent.title || currentContent.name || 'Unknown' 
-          });
-          setShowTrailer(prev => ({ ...prev, [currentContent.id]: true }));
-        }, 5000);
-      }
+      // Let StandardizedSectionContainer handle trailer management
+      // No need to manually start trailers here - the component handles it internally
       
       // Start text fade-out after 13 seconds
       textFadeTimeoutRef.current = setTimeout(() => {
@@ -161,7 +136,7 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
         }
       }, 13000);
     }
-  }, [expandedSection, currentSlide, filmography, trailerKeys, isTextPermanentlyVisible, themeSettings.autoplayVideos, openTrailer, closeTrailer, showTrailer]);
+  }, [expandedSection, currentSlide, filmography, trailerKeys, isTextPermanentlyVisible]);
 
   // Scroll functions now handled by StandardizedSectionContainer
 
@@ -169,12 +144,6 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
     if (newSlide < 0 || newSlide >= (expandedSection === 'movies' ? filmography.movies.length : filmography.shows.length)) {
       return;
     }
-
-    const previousSlide = fromSlide !== undefined ? fromSlide : currentSlide;
-    const currentContent = expandedSection === 'movies' ? filmography.movies[previousSlide] : filmography.shows[previousSlide];
-    const newContent = expandedSection === 'movies' ? filmography.movies[newSlide] : filmography.shows[newSlide];
-
-    if (!newContent) return;
 
     // Reset text visibility for new slide
     if (!isTextPermanentlyVisible) {
@@ -191,30 +160,8 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
       }, 13000);
     }
 
-    // Stop current trailer if it exists
-    if (currentContent?.id) {
-      closeTrailer();
-      setShowTrailer(prev => ({ ...prev, [currentContent.id]: false }));
-      if (timeoutRefs.current[currentContent.id]) {
-        clearTimeout(timeoutRefs.current[currentContent.id]);
-        delete timeoutRefs.current[currentContent.id];
-      }
-    }
-
-    // Start new trailer after showing cover content for 5 seconds (only if autoplay is enabled)
-    if (themeSettings.autoplayVideos && newContent?.id && trailerKeys[newContent.id]) {
-      if (timeoutRefs.current[newContent.id]) {
-        clearTimeout(timeoutRefs.current[newContent.id]);
-      }
-      
-      timeoutRefs.current[newContent.id] = setTimeout(() => {
-        openTrailer({ 
-          videoKey: trailerKeys[newContent.id], 
-          title: newContent.title || newContent.name || 'Unknown' 
-        });
-        setShowTrailer(prev => ({ ...prev, [newContent.id]: true }));
-      }, 5000);
-    }
+    // Let StandardizedSectionContainer handle trailer management
+    // No manual trailer starting/stopping needed here
   };
 
   // Auto-advance slides when expanded
@@ -320,9 +267,7 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
     const isExpanded = expandedSection === section;
     const currentContent = isExpanded ? items[currentSlide] : null;
     const currentTrailer = currentContent ? trailerKeys[currentContent.id] : null;
-    const isShowingTrailer = currentContent ? showTrailer[currentContent.id] && currentTrailer : false;
-
-
+    const isShowingTrailer = currentContent ? trailerKeys[currentContent.id] : false;
 
     return (
       <StandardizedSectionContainer
@@ -343,15 +288,17 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
         enableHorizontalScroll={true}
         expandable={true}
         enableHeroMode={true}
+        variant="live"
         renderItem={renderActorThumbnail}
         showNavigationDots={false}
         trailerKeys={trailerKeys}
+        showTrailer={showTrailer}
         currentSlide={currentSlide}
         onSlideChange={handleManualSlideChange}
-        showTrailer={showTrailer}
         isMuted={isMuted}
         onToggleMute={toggleMute}
         onItemClick={handleContentClick}
+        componentId={`actor-${section}-${actor.id}`}
       />
     );
   };
@@ -438,7 +385,7 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
       </div>
 
       {/* Content Sections - Similar to home tab with multiple sections */}
-      <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-8 pb-32 sm:pb-24">
         {/* Movies Section */}
         {renderContentSection(
           filmography.movies, 

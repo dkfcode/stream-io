@@ -58,6 +58,7 @@ const ContentSection: React.FC<ContentSectionProps> = ({
   const [isManuallyControlled, setIsManuallyControlled] = useState(false);
   const [trailerKeys, setTrailerKeys] = useState<Record<number, string>>({});
   const [showTrailer, setShowTrailer] = useState<Record<number, boolean>>({});
+  const [trailerStopped, setTrailerStopped] = useState<Record<number, boolean>>({});
   const [isMuted, setIsMuted] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
   const [isTextVisible, setIsTextVisible] = useState(true);
@@ -371,8 +372,75 @@ const ContentSection: React.FC<ContentSectionProps> = ({
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
-    setIframeKey(prev => prev + 1);
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+    
+    // Use YouTube postMessage API to control mute without restarting video
+    const currentContent = filteredItems[currentSlide];
+    if (currentContent && videoRefs.current[currentContent.id]) {
+      const iframe = videoRefs.current[currentContent.id];
+      if (iframe && iframe.contentWindow) {
+        try {
+          const command = newMutedState ? 'mute' : 'unMute';
+          
+          console.log('🔊 Sending mute command:', { command, contentId: currentContent.id, newMutedState });
+          
+          // Send the mute/unmute command
+          iframe.contentWindow.postMessage(
+            JSON.stringify({
+              event: 'command',
+              func: command,
+              args: ''
+            }),
+            '*'
+          );
+          
+          // Also try setting volume as a backup method
+          const volume = newMutedState ? 0 : 100;
+          iframe.contentWindow.postMessage(
+            JSON.stringify({
+              event: 'command',
+              func: 'setVolume',
+              args: [volume]
+            }),
+            '*'
+          );
+        } catch (error) {
+          console.log('🔊 Mute command failed:', error);
+        }
+      } else {
+        console.log('🔊 No iframe or contentWindow available:', { 
+          hasIframe: !!iframe, 
+          hasContentWindow: !!(iframe && iframe.contentWindow),
+          contentId: currentContent.id 
+        });
+      }
+    } else {
+      console.log('🔊 No current content or video ref:', { 
+        hasCurrentContent: !!currentContent,
+        hasVideoRef: !!(currentContent && videoRefs.current[currentContent.id]),
+        currentSlide 
+      });
+    }
+  };
+
+  const pauseTrailer = (contentId: number) => {
+    console.log('⏸️ Pausing trailer for content:', contentId);
+    
+    // Mark trailer as stopped for this content
+    setTrailerStopped(prev => ({ ...prev, [contentId]: true }));
+    
+    // Hide the trailer and show the background image
+    setShowTrailer(prev => ({ ...prev, [contentId]: false }));
+    
+    // Show text permanently
+    setIsTextVisible(true);
+    setIsTextPermanentlyVisible(true);
+    
+    // Clear any text fade timeout
+    if (textFadeTimeoutRef.current) {
+      clearTimeout(textFadeTimeoutRef.current);
+    }
   };
 
   const handleTextClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -388,20 +456,60 @@ const ContentSection: React.FC<ContentSectionProps> = ({
   const handleHeroClick = (e: React.MouseEvent | React.TouchEvent) => {
     const target = e.target as HTMLElement;
     
-    // Don't open modal if clicking on interactive buttons or their children
+    // Don't trigger actions if clicking on interactive buttons or their children
     if (target.closest('button') || 
         target.closest('.hero-controls') || 
         target.closest('[role="button"]') ||
         target.closest('.standardized-favorite-button') ||
         target.closest('iframe') ||
+        target.closest('.mute-button') ||
         target.tagName.toLowerCase() === 'button' ||
         target.hasAttribute('onclick') ||
         target.closest('[data-interactive]')) {
       return;
     }
     
+    // Allow clicking on text content to restore text
+    if (target.closest('.hero-text-content')) {
+      handleTextClick(e);
+      return;
+    }
+    
     const currentContent = filteredItems[currentSlide];
-    if (currentContent) {
+    if (!currentContent) return;
+    
+    const isTrailerPlaying = isShowingTrailer && !trailerStopped[currentContent.id];
+    const hasTrailerStopped = trailerStopped[currentContent.id];
+    const hasTrailerKey = !!trailerKeys[currentContent.id];
+    
+    console.log('Home tab hero section interaction:', {
+      contentId: currentContent.id,
+      title: currentContent.title || currentContent.name,
+      isTrailerPlaying,
+      hasTrailerStopped,
+      hasTrailerKey,
+      isShowingTrailer
+    });
+    
+    // Two-step interaction logic:
+    // 1. First tap when trailer is playing → Stop trailer
+    // 2. Second tap when trailer is stopped → Open modal
+    
+    if (isTrailerPlaying) {
+      // First tap: Stop the trailer
+      console.log('First tap: Stopping trailer');
+      pauseTrailer(currentContent.id);
+    } else if (hasTrailerKey && hasTrailerStopped) {
+      // Second tap: Open modal (trailer was stopped)
+      console.log('Second tap: Opening modal');
+      handleItemClick(currentContent);
+    } else if (!hasTrailerKey) {
+      // No trailer available, open modal directly
+      console.log('No trailer available, opening modal');
+      handleItemClick(currentContent);
+    } else {
+      // Fallback case: Open modal
+      console.log('Fallback: Opening modal');
       handleItemClick(currentContent);
     }
   };
@@ -760,10 +868,11 @@ const ContentSection: React.FC<ContentSectionProps> = ({
               {isShowingTrailer && (
                 <div className="absolute inset-0 z-10">
                   <iframe
-                    key={`${currentContent.id}-${iframeKey}`}
+                    key={`${currentContent.id}-${currentTrailer}`}
                     ref={(el) => { if (el) videoRefs.current[currentContent.id] = el; }}
-                    src={`https://www.youtube.com/embed/${currentTrailer}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1`}
+                    src={`https://www.youtube.com/embed/${currentTrailer}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1`}
                     className="w-full h-full"
+                    style={{ pointerEvents: 'none' }}
                     allow="autoplay; encrypted-media"
                     allowFullScreen
                   />
@@ -771,6 +880,32 @@ const ContentSection: React.FC<ContentSectionProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent pointer-events-none" />
                 </div>
               )}
+
+              {/* Top-Right Corner Controls - Actor Detail Page Style */}
+              <div className="absolute top-6 right-6 z-30 flex space-x-2">
+                {/* Mute Button */}
+                {isShowingTrailer && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMute();
+                    }}
+                    className="flex items-center justify-center w-7 h-7 bg-black/80 backdrop-blur-md text-white rounded-full border border-white/20 hover:bg-black/90 hover:border-white/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110"
+                    style={{ pointerEvents: 'auto' }}
+                    aria-label={isMuted ? 'Unmute trailer' : 'Mute trailer'}
+                  >
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                )}
+                
+                {/* Standardized Favorite Button */}
+                <StandardizedFavoriteButton
+                  item={currentContent}
+                  size="md"
+                  ariaLabel="Add to Favorite or manage lists"
+                />
+              </div>
 
               {/* Content Information */}
               <div className={`absolute bottom-0 left-0 right-0 p-6 transition-opacity duration-500 ${
@@ -827,24 +962,11 @@ const ContentSection: React.FC<ContentSectionProps> = ({
                         e.stopPropagation();
                         handleItemClick(currentContent);
                       }}
-                      className="flex items-center space-x-2 bg-gray-600/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-600/80 transition-colors text-sm border border-white/20"
+                      className="flex items-center space-x-2 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-lg font-medium border border-white/20 hover:bg-black/80 hover:border-white/40 transition-all duration-200 shadow-xl"
                     >
-                      <Info className="w-4 h-4" />
-                      <span>More Info</span>
+                      <Info className="w-3 h-3" />
+                      <span className="text-xs">More Info</span>
                     </button>
-
-                    {isShowingTrailer && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleMute();
-                        }}
-                        className="flex items-center justify-center w-10 h-10 bg-black/60 backdrop-blur-sm text-white rounded-full hover:bg-black/80 transition-colors border border-white/20"
-                        aria-label={isMuted ? 'Unmute' : 'Mute'}
-                      >
-                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>

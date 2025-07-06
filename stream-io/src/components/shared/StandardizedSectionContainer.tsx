@@ -323,9 +323,32 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
       return;
     }
     
-    // Open movie modal for the current hero item
-    if (currentHeroItem && onItemClick) {
-      onItemClick(currentHeroItem);
+    if (!currentHeroItem) return;
+    
+    const isTrailerPlaying = isTrailerActive(componentId, currentHeroItem.id);
+    const hasTrailerKey = !!trailerKeys[currentHeroItem.id];
+    
+    console.log('Hero section interaction:', {
+      contentId: currentHeroItem.id,
+      isTrailerPlaying,
+      hasTrailerKey,
+      title: currentHeroItem.title || currentHeroItem.name
+    });
+    
+    // Two-step interaction logic:
+    // 1. First click when trailer is playing → Stop trailer and show thumbnail + text
+    // 2. Second click when trailer is stopped → Open modal
+    
+    if (isTrailerPlaying && hasTrailerKey) {
+      // First click: Stop the trailer and show thumbnail + text
+      console.log('First click: Stopping trailer and showing thumbnail');
+      closeTrailer();
+      setIsTextVisible(true);
+      setIsTextPermanentlyVisible(true);
+    } else {
+      // Second click or no trailer: Open modal
+      console.log('Second click or no trailer: Opening modal');
+      if (onItemClick) onItemClick(currentHeroItem);
     }
   };
 
@@ -425,69 +448,74 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
           )}
 
           {/* Content */}
-          <div className={`absolute bottom-0 left-0 right-0 p-8 sm:p-12 transition-opacity duration-1000 ${isTextVisible ? 'opacity-100' : 'opacity-40'}`} onClick={handleTextClick}>
+          <div className={`hero-text-content absolute bottom-0 left-0 right-0 p-6 md:p-8 lg:p-10 transition-opacity duration-1000 ${
+            // Text should completely disappear (opacity-0) when trailer is active OR when manually hidden
+            (trailerKeys[currentHeroItem.id] && isTrailerActive(componentId, currentHeroItem.id) && !isModalOpen) || !isTextVisible 
+              ? 'opacity-0' 
+              : 'opacity-100'
+          }`}>
             <div className="max-w-2xl">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 drop-shadow-2xl leading-tight">
                 {currentHeroItem.title || currentHeroItem.name}
               </h1>
               
-              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex items-center space-x-4 mb-2">
                 {currentHeroItem.vote_average && currentHeroItem.vote_average > 0 && (
                   <div className="flex items-center space-x-1">
-                    <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                    <span className="text-white font-medium">{currentHeroItem.vote_average.toFixed(1)}</span>
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="text-white text-sm font-medium">{currentHeroItem.vote_average.toFixed(1)}</span>
                   </div>
                 )}
                 
-                {currentHeroItem.release_date && (
+                {(currentHeroItem.release_date || currentHeroItem.first_air_date) && (
                   <div className="flex items-center space-x-1">
-                    <Calendar className="w-5 h-5 text-gray-300" />
-                    <span className="text-white font-medium">
-                      {new Date(currentHeroItem.release_date).getFullYear()}
+                    <Calendar className="w-4 h-4 text-gray-300" />
+                    <span className="text-white text-sm font-medium">
+                      {currentHeroItem.release_date?.split('-')[0] || currentHeroItem.first_air_date?.split('-')[0]}
                     </span>
                   </div>
                 )}
                 
-                <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full">
-                  <span className="text-white text-sm font-medium">
+                <div className="px-2 py-1 bg-purple-600/80 text-white text-xs font-medium rounded-md backdrop-blur-sm">
+                  <span className="text-white text-xs font-medium">
                     {currentHeroItem.media_type === 'movie' ? 'Movie' : 'TV Series'}
                   </span>
                 </div>
               </div>
               
               {currentHeroItem.overview && (
-                <p className="text-gray-200 text-lg leading-relaxed mb-6 line-clamp-3">
+                <p className="text-gray-200 text-xs md:text-sm mb-6 max-w-2xl drop-shadow-lg leading-relaxed line-clamp-3">
                   {currentHeroItem.overview}
                 </p>
               )}
               
               {/* Action Buttons */}
-              <div className="flex items-center space-x-4 hero-controls" data-interactive="true">
+              <div className="flex items-center space-x-3 hero-controls" data-interactive="true">
                 <button
-                  className="flex items-center space-x-2 bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="flex items-center space-x-2 px-4 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 shadow-xl hover:shadow-white/20 transform hover:scale-105"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onItemClick) onItemClick(currentHeroItem);
                   }}
                 >
-                  <Play className="w-5 h-5 fill-current" />
-                  <span>Play Now</span>
+                  <Play className="w-3 h-3 fill-current" />
+                  <span className="text-xs">Watch Now</span>
                 </button>
                 
                 <button
-                  className="flex items-center space-x-2 bg-black/60 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold hover:bg-black/80 hover:scale-105 transition-all duration-200 border border-gray-600/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="flex items-center space-x-2 px-4 py-2 bg-black/60 backdrop-blur-md text-white rounded-lg font-medium border border-white/20 hover:bg-black/80 hover:border-white/40 transition-all duration-200 shadow-xl"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onItemClick) onItemClick(currentHeroItem);
                   }}
                 >
-                  <Info className="w-5 h-5" />
-                  <span>More Info</span>
+                  <Info className="w-3 h-3" />
+                  <span className="text-xs">More Info</span>
                 </button>
                 
                 <StandardizedFavoriteButton
                   item={currentHeroItem}
-                  size="lg"
+                  size="md"
                   className="standardized-favorite-button hover:scale-105 transition-transform duration-200"
                 />
               </div>
@@ -522,10 +550,10 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
                 e.stopPropagation();
                 toggleMute();
               }}
-              className="absolute top-8 right-8 p-3 bg-black/40 backdrop-blur-sm text-white rounded-xl hover:bg-black/60 transition-colors"
+              className="absolute top-8 right-8 flex items-center justify-center w-7 h-7 bg-black/80 backdrop-blur-md text-white rounded-full border border-white/20 hover:bg-black/90 hover:border-white/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110"
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
           )}
         </div>
