@@ -511,14 +511,14 @@ function App() {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto pb-safe-area-nav">
             <React.Suspense fallback={<LoadingFallback />}>
               {renderMainContent()}
             </React.Suspense>
           </main>
 
           {/* Navigation */}
-          <footer className="bg-black/90 backdrop-blur-sm border-t border-purple-500/20 safe-area-inset-bottom">
+          <footer className="mt-auto bg-black/90 backdrop-blur-sm border-t border-purple-500/20 sticky bottom-0 z-50 safe-area-inset-bottom">
             <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
           </footer>
         </div>

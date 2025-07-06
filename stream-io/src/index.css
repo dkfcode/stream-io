@@ -270,10 +270,50 @@ body {
   }
 }
 
+/* iOS Safari viewport fix */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+  
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+  
+  /* Fix for iOS Safari bottom navigation */
+  footer[class*="sticky bottom-0"] {
+    position: -webkit-sticky;
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+  }
+}
+
+/* iPhone X and newer safe area support */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pb-safe-area-nav {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+  
+  /* Ensure navigation background extends to bottom */
+  nav .safe-area-inset-bottom {
+    background-color: inherit;
+  }
+}
+
 /* Mobile navigation height with safe areas */
 .mobile-nav-height {
   height: calc(60px + env(safe-area-inset-bottom));
   min-height: calc(60px + env(safe-area-inset-bottom));
+}
+
+/* Padding for content above navigation with safe areas */
+.pb-safe-area-nav {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
 /* Ensure touch targets are adequate for iOS */

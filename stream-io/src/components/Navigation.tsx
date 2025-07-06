@@ -11,12 +11,12 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   const { t } = useI18n();
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-toolbar border-t toolbar-height z-50 safe-area-inset-bottom">
-      <div className="container mx-auto px-6 h-full">
-        <div className="flex justify-around items-center h-full">
+    <nav className="w-full bg-toolbar border-t border-purple-500/20 z-50">
+      <div className="container mx-auto px-4 sm:px-6 h-full">
+        <div className="flex justify-around items-center" style={{ height: '60px' }}>
           <button 
             onClick={() => onTabChange('home')}
-            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-1 px-3 py-2 transition-all duration-200 min-h-[44px] min-w-[44px] ${
               activeTab === 'home' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -27,7 +27,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
           <button 
             onClick={() => onTabChange('live')}
-            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-1 px-3 py-2 transition-all duration-200 min-h-[44px] min-w-[44px] ${
               activeTab === 'live' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -38,7 +38,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
           <button 
             onClick={() => onTabChange('watchlist')}
-            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-1 px-3 py-2 transition-all duration-200 min-h-[44px] min-w-[44px] ${
               activeTab === 'watchlist' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -49,7 +49,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
           <button 
             onClick={() => onTabChange('remote')}
-            className={`nav-button flex flex-col items-center justify-center space-y-0.5 px-3 py-2 transition-all duration-200 ${
+            className={`nav-button flex flex-col items-center justify-center space-y-1 px-3 py-2 transition-all duration-200 min-h-[44px] min-w-[44px] ${
               activeTab === 'remote' 
                 ? 'text-purple-400' 
                 : 'text-gray-400 hover:text-purple-400'
@@ -60,6 +60,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
           </button>
         </div>
       </div>
+      {/* iOS Safe Area Bottom Padding */}
+      <div className="safe-area-inset-bottom"></div>
     </nav>
   );
 };

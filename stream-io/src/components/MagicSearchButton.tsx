@@ -61,10 +61,11 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [lastTouchTime, setLastTouchTime] = useState(0);
+  const [justExpanded, setJustExpanded] = useState(false); // Track when component was just expanded
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hiddenMeasureRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<number | null>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { isOpen: isAnyModalOpen } = useModal();
   const { isOpen: activeTrailer } = useTrailer();
@@ -217,29 +218,41 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
     return () => clearInterval(interval);
   }, [activeTab, isAnyModalOpen, activeTrailer, isUserScrolling, allowedTabs]);
 
-  // Handle button click - expand to input (with mobile touch protection)
+  // Handle button click - expand to input (with improved iPhone touch handling)
   const handleButtonClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // For touch devices, track touch timing to prevent double-tap issues
-    if (isTouchDevice && 'touches' in e.nativeEvent) {
-      const now = Date.now();
-      if (now - lastTouchTime < 300) {
-        // Too soon after last touch, likely a double-tap issue
-        return;
-      }
-      setLastTouchTime(now);
+    console.log('🔘 Magic Search Button clicked/touched');
+    
+    // Simplified touch device handling - no timing restrictions
+    if (isTouchDevice) {
+      setLastTouchTime(Date.now());
     }
     
     setIsAnimating(true);
     setIsExpanded(true);
+    setJustExpanded(true); // Mark that we just expanded
     setValidationError(null);
+    
+    // Clear the justExpanded flag after a short delay to allow expansion to complete
+    setTimeout(() => {
+      setJustExpanded(false);
+    }, 500); // Give enough time for touch events to settle
     
     // Focus input after animation
     setTimeout(() => {
       inputRef.current?.focus();
       setIsAnimating(false);
+      
+      // Additional focus attempt for iOS devices
+      if (isTouchDevice) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+          // Trigger click to ensure iOS keyboard appears
+          inputRef.current?.click();
+        }, 100);
+      }
     }, 350);
   };
 
@@ -287,6 +300,7 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
   const handleClose = () => {
     setIsAnimating(true);
     setIsExpanded(false);
+    setJustExpanded(false); // Reset the flag when closing
     setQuery('');
     setValidationError(null);
     setInputHeight(44);
@@ -296,53 +310,45 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
     }, 350);
   };
 
-  // Enhanced click-outside handling for mobile devices
+  // Enhanced click-outside handling for mobile devices (improved to not interfere with button)
   useEffect(() => {
     const handleOutsideInteraction = (event: Event) => {
       if (!isExpanded || !containerRef.current) {
         return;
       }
 
+      // Don't close if the component was just expanded (prevent immediate closure)
+      if (justExpanded) {
+        console.log('🔘 Ignoring outside interaction - component just expanded');
+        return;
+      }
+
       const target = event.target as Node;
+      
+      // Don't close if the interaction is with the button itself (when collapsed)
+      if (!isExpanded && containerRef.current.contains(target)) {
+        return;
+      }
       
       // Check if the click/touch is outside the container
       if (!containerRef.current.contains(target)) {
-        // For touch devices, add extra validation to prevent accidental dismissal
-        if (isTouchDevice) {
-          // Get touch coordinates if available
-          const touch = (event as TouchEvent).touches?.[0] || (event as TouchEvent).changedTouches?.[0];
-          if (touch) {
-            const rect = containerRef.current.getBoundingClientRect();
-            const touchX = touch.clientX;
-            const touchY = touch.clientY;
-            
-            // Add a buffer zone around the component (20px) to prevent accidental dismissal
-            const buffer = 20;
-            if (touchX >= rect.left - buffer && 
-                touchX <= rect.right + buffer && 
-                touchY >= rect.top - buffer && 
-                touchY <= rect.bottom + buffer) {
-              return; // Don't close if touch is in buffer zone
-            }
-          }
-        }
-        
+        console.log('🔘 Closing due to outside interaction');
         handleClose();
       }
     };
 
-    // Use both mouse and touch events for comprehensive coverage
+    // Use touchend instead of touchstart for better compatibility
     if (isTouchDevice) {
-      document.addEventListener('touchstart', handleOutsideInteraction, { passive: true });
+      document.addEventListener('touchend', handleOutsideInteraction, { passive: true });
     } else {
       document.addEventListener('mousedown', handleOutsideInteraction);
     }
 
     return () => {
-      document.removeEventListener('touchstart', handleOutsideInteraction);
+      document.removeEventListener('touchend', handleOutsideInteraction);
       document.removeEventListener('mousedown', handleOutsideInteraction);
     };
-  }, [isExpanded, isTouchDevice]);
+  }, [isExpanded, isTouchDevice, justExpanded]); // Added justExpanded to dependencies
 
   // Auto-close if tab changes or modal opens
   useEffect(() => {
@@ -351,10 +357,10 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
     }
   }, [shouldShowButton, isExpanded]);
 
-  // Handle container touch events to prevent event bubbling
-  const handleContainerTouch = (e: React.TouchEvent) => {
-    e.stopPropagation();
-  };
+  // Handle container touch events to prevent event bubbling - REMOVED (this was causing the issue)
+  // const handleContainerTouch = (e: React.TouchEvent) => {
+  //   e.stopPropagation();
+  // };
 
   return (
     <div
@@ -370,8 +376,8 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
         transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
         touchAction: 'manipulation', // Prevent double-tap zoom on mobile
       }}
-      onTouchStart={handleContainerTouch}
-      onTouchEnd={handleContainerTouch}
+      // REMOVED: onTouchStart={handleContainerTouch}
+      // REMOVED: onTouchEnd={handleContainerTouch}
     >
       {/* Hidden element for measuring text height */}
       <div
@@ -387,10 +393,10 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
       />
 
       {!isExpanded ? (
-        // Magic Wand Button - subtle pulse animation and matching app colors
+        // Magic Wand Button - simplified touch handling for iPhone compatibility
         <button
           onClick={handleButtonClick}
-          onTouchEnd={handleButtonClick}
+          // REMOVED: onTouchEnd={handleButtonClick} - this was causing double firing
           className={`w-11 h-11 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 
                      hover:from-purple-500 hover:via-purple-600 hover:to-purple-700
                      text-white rounded-full shadow-2xl hover:shadow-purple-500/25
@@ -417,8 +423,8 @@ const MagicSearchButton: React.FC<MagicSearchButtonProps> = ({
             transformOrigin: 'right center',
             touchAction: 'manipulation', // Prevent double-tap zoom
           }}
-          onTouchStart={handleContainerTouch}
-          onTouchEnd={handleContainerTouch}
+          // REMOVED: onTouchStart={handleContainerTouch}
+          // REMOVED: onTouchEnd={handleContainerTouch}
         >
           {/* Purple gradient border using the app's theme colors */}
           <div 
