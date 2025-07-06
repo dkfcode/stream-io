@@ -150,16 +150,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           />
         </div>
       )}
-
-      {/* Playing indicator when video is active */}
-      {showVideo && isPlaying && (
-        <div className="absolute inset-0 z-40 pointer-events-none">
-          <div className="absolute top-4 right-4 bg-red-600/90 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            LIVE
-          </div>
-        </div>
-      )}
     </div>
   );
 };
