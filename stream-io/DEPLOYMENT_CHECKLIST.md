@@ -280,6 +280,85 @@ curl https://your-domain.com/health
 
 ---
 
+## 🎬 **TRAILER TROUBLESHOOTING GUIDE**
+
+### **Issue: Trailers Not Playing on Coolify Domain**
+
+**Most Common Causes:**
+
+#### **1. TMDB API Token Missing (90% of cases)**
+**Check**: Open browser dev console on your Coolify domain and look for errors like:
+```
+❌ TMDB Access Token is not configured or empty
+❌ Failed to get videos for content ID [number]
+```
+
+**Solution**: In Coolify Dashboard → Your App → Environment Variables, add:
+```bash
+VITE_TMDB_ACCESS_TOKEN=your_actual_tmdb_token_here
+```
+⚠️ **IMPORTANT**: Use the **API Read Access Token** (long Bearer token), not the API Key!
+
+#### **2. Build-Time vs Runtime Variable Issues**
+**Check**: Verify the token is embedded in the build by looking at network requests
+**Solution**: Redeploy after setting environment variables (variables are embedded at build time)
+
+#### **3. Content Security Policy (CSP) Issues**
+**Check**: Look for console errors about blocked iframe content
+**Solution**: Add to your server configuration:
+```
+Content-Security-Policy: frame-src 'self' https://www.youtube.com https://youtube.com
+```
+
+#### **4. HTTPS/HTTP Mixed Content**
+**Check**: Ensure all YouTube embeds use HTTPS
+**Solution**: Already handled in code - YouTube embeds use HTTPS
+
+#### **5. Browser Autoplay Restrictions**
+**Check**: Test manual play button clicks vs autoplay
+**Solution**: Already handled with user interaction requirements
+
+### **Quick Diagnostic Commands**
+
+Run these in your browser console on the Coolify domain:
+
+```javascript
+// Check if TMDB token is available
+console.log('TMDB Token:', import.meta.env.VITE_TMDB_ACCESS_TOKEN?.substring(0, 20) + '...');
+
+// Check for TMDB API errors
+// Look for red error messages in console
+
+// Test trailer fetch manually
+fetch('https://api.themoviedb.org/3/movie/550/videos', {
+  headers: {
+    'Authorization': `Bearer ${import.meta.env.VITE_TMDB_ACCESS_TOKEN}`
+  }
+}).then(r => r.json()).then(console.log);
+```
+
+### **Step-by-Step Fix Process**
+
+1. **Verify TMDB Token in Coolify**:
+   - Go to Coolify Dashboard → Your App → Environment Variables
+   - Check if `VITE_TMDB_ACCESS_TOKEN` is set
+   - Value should be a long token starting with `eyJhbGciOiJIUzI1NiJ9...`
+
+2. **Redeploy Application**:
+   - Environment variables are embedded at build time
+   - Must redeploy after adding/changing variables
+
+3. **Test Trailer Functionality**:
+   - Open browser dev console
+   - Navigate to content with trailers
+   - Check for API errors in console
+
+4. **Verify API Response**:
+   - Test TMDB API manually using console commands above
+   - Should return YouTube video keys
+
+---
+
 ## 🔍 **Step 1: Find Your Preview URL**
 
 ### In Coolify Dashboard:

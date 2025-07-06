@@ -52,13 +52,13 @@ const startServer = async () => {
         directives: {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'", "'unsafe-eval'"], // Allow eval for Vite in production
+          scriptSrc: ["'self'", "'unsafe-eval'", "https://www.youtube.com"], // ✅ Allow YouTube iframe API script
           imgSrc: ["'self'", "data:", "https:", "blob:"],
           connectSrc: ["'self'", "https:", "wss:"],
           fontSrc: ["'self'", "data:"],
           objectSrc: ["'none'"],
           mediaSrc: ["'self'", "https:", "blob:"],
-          frameSrc: ["'none'"],
+          frameSrc: ["'self'", "https://www.youtube.com", "https://youtube.com"], // ✅ Allow YouTube iframes
           workerSrc: ["'self'", "blob:"],
         },
       },
