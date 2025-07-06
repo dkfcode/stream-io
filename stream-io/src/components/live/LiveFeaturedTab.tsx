@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
-import { Target, Newspaper, Camera, Mic, Music, Gamepad2, Heart, Cloud, Car, Church, Calendar as CalendarIcon } from 'lucide-react';
+import { 
+  Trophy, 
+  Newspaper, 
+  Camera, 
+  Mic, 
+  Music, 
+  Gamepad2, 
+  Heart, 
+  Cloud, 
+  Car, 
+  Church, 
+  Calendar as CalendarIcon 
+} from 'lucide-react';
 import StandardizedSectionContainer from '../shared/StandardizedSectionContainer';
+import StandardizedThumbnail from '../shared/StandardizedThumbnail';
 import { useI18n } from '../../constants/i18n';
 import type { SearchResult } from '../../types/tmdb';
 
@@ -11,21 +24,28 @@ interface LiveFeaturedTabProps {
   onShowFilterDropdown: (show: boolean) => void;
 }
 
-// Channel data for "On Now" section
+// Channel data for "On Now" section - Complete channel lineup (using local logos where available)
 const LIVE_CHANNELS = [
-  { id: 1, name: 'ABC', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/ABC_2021_logo_White.png/1200px-ABC_2021_logo_White.png' },
-  { id: 2, name: 'CBS', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/CBS_logo.svg/512px-CBS_logo.svg.png' },
-  { id: 3, name: 'CNN', logo: 'https://download.logo.wine/logo/CNN/CNN-Logo.wine.png' },
-  { id: 4, name: 'Disney Channel', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Disney_Channel_2014_Gradient.png/960px-Disney_Channel_2014_Gradient.png' },
-  { id: 5, name: 'ESPN', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png' },
-  { id: 6, name: 'Food Network', logo: 'https://comcastadvertising.com/wp-content/uploads/2021/10/Food-White-Small.webp' },
-  { id: 7, name: 'FOX', logo: 'https://wp-cdn.milocloud.com/cap-equity-wp/wp-content/uploads/2020/04/08180526/ox-logo-fox-tv-logo-png.png' },
-  { id: 8, name: 'Fox News', logo: 'https://cdn.shopify.com/s/files/1/0558/6413/1764/files/Fox_News_Logo_Design_History_Evolution_0_1024x1024.jpg?v=1694099298' },
+  { id: 1, name: 'ABC', logo: '/images/logos/abc/logo.png' }, // Local logo
+  { id: 2, name: 'CBS', logo: '/images/logos/cbs/logo.png' }, // Local logo
+  { id: 3, name: 'CNN', logo: '/images/logos/cnn/logo.png' }, // Local logo
+  { id: 4, name: 'Disney Channel', logo: '/images/logos/disney-channel/logo.png' }, // Local logo
+  { id: 5, name: 'ESPN', logo: '/images/logos/espn/logo.png' }, // Local logo
+  { id: 6, name: 'Food Network', logo: '/images/logos/food-network/logo.png' }, // Local logo
+  { id: 7, name: 'FOX', logo: '/images/logos/fox/logo.png' }, // Local logo
+  { id: 8, name: 'Fox News', logo: '/images/logos/fox-news/logo.jpg' }, // Local logo
+  { id: 9, name: 'Hallmark Channel', logo: '/images/logos/hallmark-channel/logo.png' }, // Local logo
+  { id: 10, name: 'ION Television', logo: '/images/logos/ion-television/logo.png' }, // Local logo
+  { id: 11, name: 'Lifetime', logo: '/images/logos/lifetime/logo.png' }, // Local logo
+  { id: 12, name: 'NBC', logo: '/images/logos/nbc/logo.png' }, // Local logo
+  { id: 13, name: 'Nickelodeon', logo: '/images/logos/nickelodeon/logo.png' }, // Local logo
+  { id: 14, name: 'TBS', logo: '/images/logos/tbs/logo.jpg' }, // Local logo
+  { id: 15, name: 'TNT', logo: '/images/logos/tnt/logo.jpg' }, // Local logo
 ];
 
 // Category buttons configuration
 const CATEGORY_BUTTONS = [
-  { id: 'sports', name: 'Sports', icon: Target, color: 'purple' },
+  { id: 'sports', name: 'Sports', icon: Trophy, color: 'purple' },
   { id: 'news', name: 'News', icon: Newspaper, color: 'blue' },
   { id: 'reality', name: 'Reality', icon: Camera, color: 'pink' },
   { id: 'talk-shows', name: 'Talk Shows', icon: Mic, color: 'green' },
@@ -36,18 +56,6 @@ const CATEGORY_BUTTONS = [
   { id: 'automotive', name: 'Automotive', icon: Car, color: 'orange' },
   { id: 'religious', name: 'Religious', icon: Church, color: 'amber' },
   { id: 'live-events', name: 'Live Events', icon: CalendarIcon, color: 'violet' },
-];
-
-// Sports subcategories
-const SPORTS_SUBCATEGORIES = [
-  { id: 'basketball', name: 'Basketball', content: generateSportsContent('Basketball') },
-  { id: 'football', name: 'Football', content: generateSportsContent('Football') },
-  { id: 'baseball', name: 'Baseball', content: generateSportsContent('Baseball') },
-  { id: 'soccer', name: 'Soccer', content: generateSportsContent('Soccer') },
-  { id: 'hockey', name: 'Hockey', content: generateSportsContent('Hockey') },
-  { id: 'tennis', name: 'Tennis', content: generateSportsContent('Tennis') },
-  { id: 'golf', name: 'Golf', content: generateSportsContent('Golf') },
-  { id: 'mma', name: 'MMA', content: generateSportsContent('MMA') },
 ];
 
 // Generate sports content for subcategories
@@ -78,6 +86,18 @@ function generateSportsContent(sport: string): SearchResult[] {
     popularity: 70 + Math.random() * 30,
   }));
 }
+
+// Sports subcategories
+const SPORTS_SUBCATEGORIES = [
+  { id: 'basketball', name: 'Basketball', content: generateSportsContent('Basketball') },
+  { id: 'football', name: 'Football', content: generateSportsContent('Football') },
+  { id: 'baseball', name: 'Baseball', content: generateSportsContent('Baseball') },
+  { id: 'soccer', name: 'Soccer', content: generateSportsContent('Soccer') },
+  { id: 'hockey', name: 'Hockey', content: generateSportsContent('Hockey') },
+  { id: 'tennis', name: 'Tennis', content: generateSportsContent('Tennis') },
+  { id: 'golf', name: 'Golf', content: generateSportsContent('Golf') },
+  { id: 'mma', name: 'MMA', content: generateSportsContent('MMA') },
+];
 
 // Generate upcoming content
 function generateUpcomingContent(): SearchResult[] {
@@ -141,14 +161,20 @@ const LiveFeaturedTab: React.FC<LiveFeaturedTabProps> = ({
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all duration-200 whitespace-nowrap ${
+                className={`flex flex-col items-center space-y-2 px-4 py-3 rounded-2xl font-medium transition-all duration-200 whitespace-nowrap min-w-[80px] ${
                   selectedCategory === category.id
-                    ? 'bg-purple-500 text-white shadow-lg'
-                    : 'bg-black/40 text-gray-300 hover:bg-black/60 hover:text-white border border-gray-600'
+                    ? 'bg-purple-500/20 text-purple-400 shadow-lg border border-purple-500/30'
+                    : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80 hover:text-white border border-gray-600/30'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span>{category.name}</span>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  selectedCategory === category.id
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-700/60 text-gray-300'
+                }`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-medium">{category.name}</span>
               </button>
             );
           })}
@@ -157,13 +183,196 @@ const LiveFeaturedTab: React.FC<LiveFeaturedTabProps> = ({
     );
   };
 
-  const renderSection = (
+  // Custom render function for channel thumbnails to match home tab styling
+  const renderChannelThumbnail = (item: SearchResult, index: number) => {
+    const channel = LIVE_CHANNELS.find(ch => ch.id === item.id);
+    if (!channel) {
+      return (
+        <StandardizedThumbnail
+          key={item.id}
+          item={item}
+          size="md"
+          onClick={() => {}}
+          showRating={false}
+          showMediaType={false}
+          showPlatformBadge={false}
+        />
+      );
+    }
+
+    // Special handling for TBS - use entire image as thumbnail
+    if (channel.name === 'TBS') {
+      return (
+        <div key={item.id} className="relative group w-32 h-48 flex-shrink-0">
+          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105">
+            {/* Live indicator */}
+            <div className="absolute top-2 left-2 flex items-center space-x-1 bg-red-500 px-2 py-1 rounded-full text-white text-xs font-medium z-10">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span>LIVE</span>
+            </div>
+            
+            {/* TBS image as full thumbnail */}
+            <img 
+              src={channel.logo} 
+              alt={channel.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.className = 'w-full h-full bg-gray-800 flex items-center justify-center text-white font-bold text-center text-sm';
+                fallbackDiv.textContent = channel.name;
+                target.parentNode?.appendChild(fallbackDiv);
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Special handling for Fox News - use entire image as thumbnail
+    if (channel.name === 'Fox News') {
+      return (
+        <div key={item.id} className="relative group w-32 h-48 flex-shrink-0">
+          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105">
+            {/* Live indicator */}
+            <div className="absolute top-2 left-2 flex items-center space-x-1 bg-red-500 px-2 py-1 rounded-full text-white text-xs font-medium z-10">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span>LIVE</span>
+            </div>
+            
+            {/* Fox News image as full thumbnail */}
+            <img 
+              src={channel.logo} 
+              alt={channel.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.className = 'w-full h-full bg-gray-800 flex items-center justify-center text-white font-bold text-center text-sm';
+                fallbackDiv.textContent = channel.name;
+                target.parentNode?.appendChild(fallbackDiv);
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Special handling for TNT - use entire image as thumbnail
+    if (channel.name === 'TNT') {
+      return (
+        <div key={item.id} className="relative group w-32 h-48 flex-shrink-0">
+          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105">
+            {/* Live indicator */}
+            <div className="absolute top-2 left-2 flex items-center space-x-1 bg-red-500 px-2 py-1 rounded-full text-white text-xs font-medium z-10">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span>LIVE</span>
+            </div>
+            
+            {/* TNT image as full thumbnail */}
+            <img 
+              src={channel.logo} 
+              alt={channel.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.className = 'w-full h-full bg-gray-800 flex items-center justify-center text-white font-bold text-center text-sm';
+                fallbackDiv.textContent = channel.name;
+                target.parentNode?.appendChild(fallbackDiv);
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Special handling for Food Network - crop out transparent padding completely
+    if (channel.name === 'Food Network') {
+      return (
+        <div key={item.id} className="relative group w-32 h-48 flex-shrink-0">
+          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105 bg-red-600">
+            {/* Live indicator */}
+            <div className="absolute top-2 left-2 flex items-center space-x-1 bg-red-500 px-2 py-1 rounded-full text-white text-xs font-medium z-10">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span>LIVE</span>
+            </div>
+            
+            {/* Food Network image - centered without cropping */}
+            <div className="absolute inset-0 flex items-center justify-center p-2">
+              <img 
+                src={channel.logo} 
+                alt={channel.name}
+                className="max-w-full max-h-full object-contain filter drop-shadow-lg"
+                style={{ maxWidth: '85%', maxHeight: '75%' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallbackDiv = document.createElement('div');
+                  fallbackDiv.className = 'w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-center text-sm';
+                  fallbackDiv.textContent = channel.name;
+                  target.parentNode?.appendChild(fallbackDiv);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={item.id} className="relative group w-32 h-48 flex-shrink-0">
+        <div className={`relative w-full h-full rounded-xl overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105 ${getChannelBackgroundClass(channel.name)}`}>
+          {/* Live indicator */}
+          <div className="absolute top-2 left-2 flex items-center space-x-1 bg-red-500 px-2 py-1 rounded-full text-white text-xs font-medium z-10">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>LIVE</span>
+          </div>
+          
+          {/* Channel logo */}
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <img 
+              src={channel.logo} 
+              alt={channel.name}
+              className="max-w-full max-h-full object-contain filter drop-shadow-lg"
+              style={{ maxWidth: '80%', maxHeight: '60%' }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.className = 'text-white font-bold text-center text-sm';
+                fallbackDiv.textContent = channel.name;
+                target.parentNode?.appendChild(fallbackDiv);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+    const renderSection = (
     title: string,
     items: SearchResult[],
     sectionId: string,
     showSeeMore: boolean = true
   ) => {
     if (items.length === 0) return null;
+
+    // Special handling for "On Now" section with channel thumbnails
+    const renderItem = sectionId === 'on-now' 
+      ? renderChannelThumbnail
+      : (item: SearchResult, index: number) => (
+          <StandardizedThumbnail
+            key={item.id}
+            item={item}
+            size="md"
+            onClick={() => {}}
+          />
+        );
 
     return (
       <StandardizedSectionContainer
@@ -180,9 +389,31 @@ const LiveFeaturedTab: React.FC<LiveFeaturedTabProps> = ({
           setSectionHeroIndexes(prev => ({ ...prev, [sectionId]: index }));
         }}
         className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-purple-500/20 shadow-2xl transition-all duration-500"
-        renderItem={(item, index) => <div key={item.id}>{item.title || item.name}</div>}
+        renderItem={renderItem}
       />
     );
+  };
+
+  // Helper function to get channel background colors
+  const getChannelBackgroundClass = (channelName: string) => {
+    const backgrounds = {
+      'ABC': 'bg-black',
+      'CBS': 'bg-blue-700',
+      'CNN': 'bg-white',
+      'Disney Channel': 'bg-blue-600',
+      'ESPN': 'bg-white',
+      'Food Network': 'bg-red-600',
+      'FOX': 'bg-black',
+      'Fox News': 'bg-blue-800',
+      'Hallmark Channel': 'bg-purple-600',
+      'ION Television': 'bg-blue-600',
+      'Lifetime': 'bg-red-600',
+      'NBC': 'bg-blue-500',
+      'Nickelodeon': 'bg-orange-500',
+      'TBS': 'bg-blue-800',
+      'TNT': 'bg-black'
+    };
+    return backgrounds[channelName as keyof typeof backgrounds] || 'bg-gray-700';
   };
 
   const renderSportsSubcategories = () => {

@@ -7,8 +7,73 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const LOGOS_DIR = path.join(__dirname, '..', 'src', 'assets', 'images', 'logos');
+const LOGOS_DIR = path.join(__dirname, '..', 'public', 'images', 'logos');
 
+// Live Channel Network Logos (from LiveFeaturedTab.tsx)
+const liveChannelLogos = {
+  'abc': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/ABC_2021_logo_White.png/1200px-ABC_2021_logo_White.png',
+    fallback: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/ABC_2021_logo_White.png/1200px-ABC_2021_logo_White.png'
+  },
+  'cbs': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/CBS_logo.svg/512px-CBS_logo.svg.png',
+    fallback: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/CBS_logo.svg/512px-CBS_logo.svg.png'
+  },
+  'cnn': {
+    logo: 'https://download.logo.wine/logo/CNN/CNN-Logo.wine.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/CNN-Logo.png'
+  },
+  'disney-channel': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Disney_Channel_2014_Gradient.png/960px-Disney_Channel_2014_Gradient.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/11/Disney-Channel-Logo.png'
+  },
+  'espn': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/ESPN-Logo.png'
+  },
+  'food-network': {
+    logo: 'https://www.pngfind.com/pngs/m/114-1143949_food-network-food-network-black-and-white-hd.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/07/Food-Network-Logo.png'
+  },
+  'fox': {
+    logo: 'https://wp-cdn.milocloud.com/cap-equity-wp/wp-content/uploads/2020/04/08180526/ox-logo-fox-tv-logo-png.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/Fox-Logo.png'
+  },
+  'fox-news': {
+    logo: 'https://cdn.shopify.com/s/files/1/0558/6413/1764/files/Fox_News_Logo_Design_History_Evolution_0_1024x1024.jpg?v=1694099298',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/Fox-News-Logo.png'
+  },
+  'hallmark-channel': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Hallmark_Channel.svg/512px-Hallmark_Channel.svg.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/07/Hallmark-Channel-Logo.png'
+  },
+  'ion-television': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Ion_logo.svg/250px-Ion_logo.svg.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/Ion-Television-Logo.png'
+  },
+  'lifetime': {
+    logo: 'https://aenselect.com/admin/images/Lifetime_Logo_2019_WHITE.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/Lifetime-Logo.png'
+  },
+  'nbc': {
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/NBC_logo.svg/512px-NBC_logo.svg.png',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/NBC-Logo.png'
+  },
+  'nickelodeon': {
+    logo: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/a5c95036-7303-4d2d-a772-c4d136a13666/dgac7br-88e5738d-89be-4e30-8811-ddb2a05900cf.png/v1/fill/w_1280,h_183/nickelodeon_2009_logo_white_by_gamer8371_dgac7br-fullview.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTgzIiwicGF0aCI6IlwvZlwvYTVjOTUwMzYtNzMwMy00ZDJkLWE3NzItYzRkMTM2YTEzNjY2XC9kZ2FjN2JyLTg4ZTU3MzhkLTg5YmUtNGUzMC04ODExLWRkYjJhMDU5MDBjZi5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.MzGkbXjjLkwUVRJPBzyaFEolRwsRlhehviikEnS4bAk',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/Nickelodeon-Logo.png'
+  },
+  'tbs': {
+    logo: 'https://cdn.sanity.io/images/1pn9obcz/production/8ea9832e8c824cc4b891f5b42460eb6ec78024b5-960x1080.jpg?auto=format&q=80&w=600',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/TBS-Logo.png'
+  },
+  'tnt': {
+    logo: 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/680f90a5-35e4-4f31-b1b6-ee9b3e8fda12/den1xvt-dd983f14-9eb2-402d-954b-078719a24f71.jpg/v1/fill/w_1024,h_598,q_75,strp/tnt_logo_black_background_official_by_teamrocketdjvgboy123_den1xvt-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTk4IiwicGF0aCI6IlwvZlwvNjgwZjkwYTUtMzVlNC00ZjMxLWIxYjYtZWU5YjNlOGZkYTEyXC9kZW4xeHZ0LWRkOTgzZjE0LTllYjItNDAyZC05NTRiLTA3ODcxOWEyNGY3MS5qcGciLCJ3aWR0aCI6Ijw9MTAyNCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.wx72c2z-EEbSjr8I_bJtAGbJV7yZbKSv3o0XyREqTls',
+    fallback: 'https://logos-world.net/wp-content/uploads/2020/04/TNT-Logo.png'
+  }
+};
+
+// Streaming service logos (existing)
 const logoSources = {
   'apple-tv': {
     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/AppleTVLogo.svg/2048px-AppleTVLogo.svg.png',
@@ -119,13 +184,23 @@ function downloadFile(url, filepath) {
 }
 
 async function downloadLogos() {
-  console.log('📥 Downloading streaming service and TV provider logos...\n');
+  console.log('📥 Downloading all logos (live channels, streaming services, and TV providers)...\n');
 
+  const liveChannels = Object.keys(liveChannelLogos);
   const streamingServices = ['apple-tv', 'netflix', 'disney-plus', 'prime-video', 'hulu', 'max', 'peacock', 'paramount-plus', 'starz', 'crunchyroll'];
   const tvProviders = ['xfinity', 'directv', 'att-uverse', 'youtube-tv', 'spectrum', 'dish', 'verizon-fios', 'cox', 'optimum'];
 
+  // Download live channel logos first
+  console.log('📺 Downloading Live Channel Network Logos:');
+  console.log('==========================================');
+  for (const channelName of liveChannels) {
+    if (liveChannelLogos[channelName]) {
+      await downloadServiceLogos(channelName, liveChannelLogos[channelName]);
+    }
+  }
+
   // Download streaming service logos
-  console.log('🎬 Downloading Streaming Service Logos:');
+  console.log('\n🎬 Downloading Streaming Service Logos:');
   console.log('======================================');
   for (const serviceName of streamingServices) {
     if (logoSources[serviceName]) {
@@ -144,8 +219,9 @@ async function downloadLogos() {
   console.log('\n✅ Logo download process completed!');
   console.log('\n📝 Next steps:');
   console.log('1. Review downloaded images in public/images/logos/');
-  console.log('2. Update streamingServices.ts to use local logo paths');
-  console.log('3. Update tvProviders.ts to use local logo paths');
+  console.log('2. Update LiveFeaturedTab.tsx to use local logo paths');
+  console.log('3. Update streamingServices.ts to use local logo paths');
+  console.log('4. Update tvProviders.ts to use local logo paths');
 }
 
 async function downloadServiceLogos(serviceName, urls) {
