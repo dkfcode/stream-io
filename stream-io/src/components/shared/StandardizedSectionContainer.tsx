@@ -114,7 +114,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   const textFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Use the exact same styling as ContentSection - matching user's memory
-  const containerClasses = `bg-black/20 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-purple-500/20 shadow-2xl transition-all duration-500 ${actualIsExpanded ? 'pb-0' : ''} ${className}`;
+  const containerClasses = `bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-purple-500/20 shadow-2xl transition-all duration-500 ${actualIsExpanded ? 'pb-0' : ''} ${className}`;
   
   // Filter out hidden items
   const { isInHidden } = useWatchlistStore();
@@ -379,7 +379,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
       return (
       <div className={containerClasses} data-expanded={actualIsExpanded ? "true" : "false"}>
       {/* Header - exact styling from ContentSection */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3 min-w-0 flex-1">
           <h2 className="text-2xl font-bold text-white">{title}</h2>
           {icon}
@@ -591,7 +591,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
         {/* Scrollable Container - single row layout */}
         <div 
           ref={scrollContainerRef}
-          className="grid grid-flow-col auto-cols-max gap-4 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
+          className="grid grid-flow-col auto-cols-max gap-2 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
         >
           {displayItems.map((item, index) => (
             <div 

@@ -134,7 +134,7 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
     
     return genreWeighted
       .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, showSeeMorePage ? 50 : 20);
+        .slice(0, showSeeMorePage ? 100 : 20);
   }, [movies, shows, selectedFilter, selectedGenres, moodQuery, showSeeMorePage, isInHidden]);
 
   const handleItemClick = async (item: SearchResult) => {
@@ -680,7 +680,7 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
             
             {preferredViewMode === 'grid' ? (
               // Grid View
-              <div className={`grid ${getOptimalGridLayout(seeMoreItems.length)} gap-4`}>
+              <div className={`grid ${getOptimalGridLayout(seeMoreItems.length)} gap-2`}>
                 {seeMoreItems.map((item: SearchResult) => (
                   <div key={item.id} className="relative group">
                     <button
@@ -1067,7 +1067,7 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
       
       <div 
         ref={scrollContainerRef}
-        className="grid grid-flow-col auto-cols-max gap-4 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
+                  className="grid grid-flow-col auto-cols-max gap-2 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
       >
         {combinedContent.map((item) => (
           <div

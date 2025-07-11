@@ -456,7 +456,7 @@ const HomePage: React.FC<HomePageProps> = ({ selectedFilter, isPaused: externalI
   return (
     <div className="min-h-screen bg-black pb-20 sm:pb-24">
       {/* Content Container with consistent width constraints */}
-      <div className="px-4 sm:px-6 max-w-7xl mx-auto space-y-8">
+      <div className="px-4 sm:px-6 max-w-7xl mx-auto pt-2 space-y-8">
         {/* Hero Section with Intersection Observer */}
         <div ref={heroObserverRef}>
           <HeroSection

@@ -7,7 +7,7 @@ import { getVideos } from '../services/tmdb';
 import VideoPlayer from './VideoPlayer';
 import { useWatchlistStore } from '../stores/watchlistStore';
 import ListSelectionDialog from './ListSelectionDialog';
-import { useTheme, useModal, useTrailer } from '../stores';
+import { useTheme, useModal } from '../stores';
 import { usePreferencesStore } from '../stores/preferencesStore';
 import { getChannelBrandColors } from '../constants/channelBrandColors';
 import StandardizedFavoriteButton from './StandardizedFavoriteButton';
@@ -57,7 +57,7 @@ const MovieModal: React.FC<MovieModalProps> = ({
 }) => {
   const { themeSettings } = useTheme();
   const { preferences } = usePreferencesStore();
-  const { closeTrailer } = useTrailer();
+  // Removed closeTrailer to prevent infinite loop issues
   const [videos, setVideos] = useState<VideoResult[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
@@ -119,16 +119,7 @@ const MovieModal: React.FC<MovieModalProps> = ({
     fetchVideos();
   }, [item.id, item.media_type]);
 
-  // Manage trailer state when modal opens/closes
-  useEffect(() => {
-    // Close any open trailers when modal opens
-    closeTrailer();
-    
-    return () => {
-      // Component is unmounting - close trailers
-      closeTrailer();
-    };
-  }, []); // Remove closeTrailer from dependencies to prevent infinite loop
+  // Removed problematic closeTrailer call to prevent infinite loop
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {

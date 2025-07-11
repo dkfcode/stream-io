@@ -157,21 +157,21 @@ const ContentSection: React.FC<ContentSectionProps> = ({
       !isInHidden(item.id) // Filter out hidden items
     );
 
-    // For the main section view, limit to 20 items for performance
+    // For the main section view, show more items for denser layout like Hulu
     // For See More page, we'll use all available items (up to 50)
     if (!isShowingSeeMorePage) {
-      if (selectedFilter !== 'all' && filtered.length < 20) {
+      if (selectedFilter !== 'all' && filtered.length < 35) {
         filtered = items
           .filter(item => item.media_type === selectedFilter)
-          .slice(0, 20);
+          .slice(0, 35);
       } else if (selectedFilter !== 'all') {
-        filtered = filtered.slice(0, 20);
+        filtered = filtered.slice(0, 35);
       } else {
-        filtered = filtered.slice(0, 20);
+        filtered = filtered.slice(0, 35);
       }
     } else {
-      // For See More page, show up to 50 items
-      filtered = filtered.slice(0, 50);
+      // For See More page, show up to 100 items for denser content discovery
+      filtered = filtered.slice(0, 100);
     }
 
     console.log('Filtered items computed:', { filteredLength: filtered.length, isShowingSeeMorePage });
@@ -556,7 +556,7 @@ const ContentSection: React.FC<ContentSectionProps> = ({
     let allItems = items.filter(item => 
       (selectedFilter === 'all' || item.media_type === selectedFilter) &&
       !isInHidden(item.id)
-    ).slice(0, 50);
+    ).slice(0, 100);
     
     if (seeMoreFilter !== 'all') {
       allItems = allItems.filter(item => item.media_type === seeMoreFilter);
@@ -671,7 +671,7 @@ const ContentSection: React.FC<ContentSectionProps> = ({
             
             {preferredViewMode === 'grid' ? (
               // Grid View
-              <div className={`grid ${getOptimalGridLayout(seeMoreItems.length)} gap-4`}>
+              <div className={`grid ${getOptimalGridLayout(seeMoreItems.length)} gap-2`}>
                 {seeMoreItems.map((item: SearchResult) => (
                   <div key={item.id} className="relative group">
                     <button
@@ -814,8 +814,8 @@ const ContentSection: React.FC<ContentSectionProps> = ({
   }
 
   return (
-            <div className={`bg-black/20 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-purple-500/20 shadow-2xl transition-all duration-500 ${isExpanded ? 'pb-0' : ''}`} data-expanded={isExpanded ? "true" : "false"}>
-      <div className="flex items-center justify-between mb-6">
+            <div className={`bg-black/20 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-purple-500/20 shadow-2xl transition-all duration-500 ${isExpanded ? 'pb-0' : ''}`} data-expanded={isExpanded ? "true" : "false"}>
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <h2 className="text-2xl font-bold text-white">{title}</h2>
           {getSectionIcon()}
@@ -1005,9 +1005,9 @@ const ContentSection: React.FC<ContentSectionProps> = ({
         
         <div 
           ref={scrollContainerRef}
-          className="grid grid-flow-col auto-cols-max gap-4 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
+          className="grid grid-flow-col auto-cols-max gap-2 overflow-x-auto pb-4 scroll-smooth hide-scrollbar"
         >
-          {filteredItems.slice(0, 20).map((item, index) => (
+          {filteredItems.map((item, index) => (
             <div
               key={`${item.id}-${index}`}
               className="relative group"
@@ -1044,7 +1044,7 @@ const ContentSection: React.FC<ContentSectionProps> = ({
                     });
                   }
                 }}
-                className="relative w-36 h-54 flex-shrink-0 rounded-xl overflow-hidden group/item focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105 hover:z-10 cursor-pointer"
+                className="relative w-32 h-48 flex-shrink-0 rounded-xl overflow-hidden group/item focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 transform hover:scale-105 hover:z-10 cursor-pointer"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
