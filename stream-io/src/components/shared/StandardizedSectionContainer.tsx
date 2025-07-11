@@ -109,6 +109,14 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   const [isTextPermanentlyVisible, setIsTextPermanentlyVisible] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   
+  // Drag/swipe state for hero mode
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragCurrent, setDragCurrent] = useState({ x: 0, y: 0 });
+  const [touchStartTime, setTouchStartTime] = useState(0);
+  const dragThreshold = 30; // Reduced for better sensitivity
+  const tapTimeThreshold = 150; // Reduced for more responsive tap detection
+  
   // Trailer management state and refs
   const timeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const textFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -309,6 +317,18 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
   };
 
   const handleHeroClick = (e: React.MouseEvent | React.TouchEvent) => {
+    // Don't trigger actions if we were actually dragging (significant movement)
+    const distance = Math.sqrt(
+      Math.pow(dragCurrent.x - dragStart.x, 2) + 
+      Math.pow(dragCurrent.y - dragStart.y, 2)
+    );
+    
+    // Only consider it a drag if there was significant movement (not just time-based)
+    if (distance > 20) {
+      console.log('StandardizedSectionContainer click prevented due to drag movement:', distance);
+      return;
+    }
+    
     const target = e.target as HTMLElement;
     
     // Don't open modal if clicking on interactive buttons or their children
@@ -323,12 +343,49 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
       return;
     }
     
+    // Check for border tap navigation (left/right 20% of hero section)
+    const heroElement = e.currentTarget as HTMLElement;
+    const rect = heroElement.getBoundingClientRect();
+    const clickX = 'clientX' in e ? e.clientX : e.touches[0].clientX;
+    const relativeX = clickX - rect.left;
+    const sectionWidth = rect.width;
+    const leftBorderWidth = sectionWidth * 0.2; // Left 20%
+    const rightBorderWidth = sectionWidth * 0.8; // Right 20% starts at 80%
+    
+    // Check if click is in left border area
+    if (relativeX <= leftBorderWidth && displayItems.length > 1) {
+      // Navigate to previous slide (only if not already at first slide)
+      if (currentSlide > 0) {
+        const prevIndex = currentSlide - 1;
+        console.log(`StandardizedSectionContainer left border tap: navigating to slide ${prevIndex}`);
+        if (onSlideChange) onSlideChange(prevIndex);
+        return;
+      } else {
+        console.log('StandardizedSectionContainer left border tap: already at first slide, no navigation');
+        return;
+      }
+    }
+    
+    // Check if click is in right border area
+    if (relativeX >= rightBorderWidth && displayItems.length > 1) {
+      // Navigate to next slide (only if not already at last slide)
+      if (currentSlide < displayItems.length - 1) {
+        const nextIndex = currentSlide + 1;
+        console.log(`StandardizedSectionContainer right border tap: navigating to slide ${nextIndex}`);
+        if (onSlideChange) onSlideChange(nextIndex);
+        return;
+      } else {
+        console.log('StandardizedSectionContainer right border tap: already at last slide, no navigation');
+        return;
+      }
+    }
+    
     if (!currentHeroItem) return;
     
     const isTrailerPlaying = isTrailerActive(componentId, currentHeroItem.id);
     const hasTrailerKey = !!trailerKeys[currentHeroItem.id];
     
-    console.log('Hero section interaction:', {
+    console.log('StandardizedSectionContainer center interaction:', {
       contentId: currentHeroItem.id,
       isTrailerPlaying,
       hasTrailerKey,
@@ -356,6 +413,60 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
     if (onToggleMute) {
       onToggleMute();
     }
+  };
+
+  // Drag handlers for swipe navigation in hero mode
+  const handleDragStart = (clientX: number, clientY: number) => {
+    console.log('StandardizedSectionContainer drag start:', clientX, clientY);
+    setIsDragging(true);
+    setDragStart({ x: clientX, y: clientY });
+    setDragCurrent({ x: clientX, y: clientY });
+    setTouchStartTime(Date.now());
+  };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (!isDragging) return;
+    console.log('StandardizedSectionContainer drag move:', clientX, clientY);
+    setDragCurrent({ x: clientX, y: clientY });
+  };
+
+  const handleDragEnd = () => {
+    if (!isDragging) return;
+    
+    const deltaX = dragCurrent.x - dragStart.x;
+    const deltaY = dragCurrent.y - dragStart.y;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
+    const touchDuration = Date.now() - touchStartTime;
+    
+    console.log(`StandardizedSectionContainer drag attempt: deltaX=${deltaX}, deltaY=${deltaY}, duration=${touchDuration}, threshold=${dragThreshold}`);
+    
+    // Improved directional gesture detection
+    const isHorizontalGesture = absDeltaX > dragThreshold && // Minimum horizontal movement
+                               absDeltaX > absDeltaY * 1.5 && // Horizontal movement must be 1.5x more than vertical
+                               touchDuration > tapTimeThreshold && // Minimum duration to avoid accidental triggers
+                               absDeltaY < 80; // Maximum vertical movement allowed
+    
+    if (isHorizontalGesture) {
+      if (deltaX > 0) {
+        // Swipe right - go to previous slide
+        const prevIndex = (currentSlide - 1 + displayItems.length) % displayItems.length;
+        console.log(`StandardizedSectionContainer horizontal swipe detected: swiping right to slide ${prevIndex}`);
+        if (onSlideChange) onSlideChange(prevIndex);
+      } else {
+        // Swipe left - go to next slide
+        const nextIndex = (currentSlide + 1) % displayItems.length;
+        console.log(`StandardizedSectionContainer horizontal swipe detected: swiping left to slide ${nextIndex}`);
+        if (onSlideChange) onSlideChange(nextIndex);
+      }
+    } else {
+      console.log(`StandardizedSectionContainer swipe not triggered: absDeltaX=${absDeltaX}, absDeltaY=${absDeltaY}, ratio=${absDeltaX/absDeltaY}, duration=${touchDuration}`);
+    }
+    
+    setIsDragging(false);
+    setDragStart({ x: 0, y: 0 });
+    setDragCurrent({ x: 0, y: 0 });
+    setTouchStartTime(0);
   };
 
   if (isLoading) {
@@ -415,11 +526,42 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
 
       {/* Hero Mode when expanded */}
       {actualIsExpanded && enableHeroMode && currentHeroItem ? (
-        <div className={`relative rounded-2xl overflow-hidden mb-8 cursor-pointer group ${
-          variant === 'live' 
-            ? 'h-80' // Use h-80 (320px) for Live tab to match existing custom hero sections
-            : 'h-[70vh] sm:h-[80vh] lg:h-[90vh] xl:h-[95vh]' // Keep larger height for Home tab
-        }`} onClick={handleHeroClick}>
+        <div 
+          className={`relative rounded-2xl overflow-hidden mb-8 cursor-pointer group ${
+            variant === 'live' 
+              ? 'h-80' // Use h-80 (320px) for Live tab to match existing custom hero sections
+              : 'h-[70vh] sm:h-[80vh] lg:h-[90vh] xl:h-[95vh]' // Keep larger height for Home tab
+          }`} 
+          onClick={handleHeroClick}
+          onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+          onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            console.log('StandardizedSectionContainer touch start:', touch.clientX, touch.clientY);
+            handleDragStart(touch.clientX, touch.clientY);
+          }}
+          onTouchMove={(e) => {
+            if (isDragging) {
+              e.preventDefault(); // Only prevent default if we're actively dragging
+            }
+            const touch = e.touches[0];
+            handleDragMove(touch.clientX, touch.clientY);
+          }}
+          onTouchEnd={(e) => {
+            if (isDragging) {
+              e.preventDefault(); // Only prevent default if we were dragging
+            }
+            handleDragEnd();
+          }}
+          onTouchCancel={(e) => {
+            if (isDragging) {
+              e.preventDefault(); // Only prevent default if we were dragging
+            }
+            handleDragEnd();
+          }}
+        >
           {/* Background Image */}
           <img
             src={`https://image.tmdb.org/t/p/original${currentHeroItem.backdrop_path || currentHeroItem.poster_path}`}
@@ -454,7 +596,32 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
               ? 'opacity-0' 
               : 'opacity-100'
           }`}>
-            <div className="max-w-2xl">
+            <div 
+              className="max-w-2xl"
+              // Add drag handlers to text content for consistent swipe behavior
+              // Note: No stopPropagation() so normal taps can bubble up to parent
+              onMouseDown={(e) => {
+                handleDragStart(e.clientX, e.clientY);
+              }}
+              onMouseMove={(e) => {
+                handleDragMove(e.clientX, e.clientY);
+              }}
+              onMouseUp={(e) => {
+                handleDragEnd();
+              }}
+              onTouchStart={(e) => {
+                const touch = e.touches[0];
+                console.log('StandardizedSectionContainer text content touch start:', touch.clientX, touch.clientY);
+                handleDragStart(touch.clientX, touch.clientY);
+              }}
+              onTouchMove={(e) => {
+                if (isDragging) {
+                  e.preventDefault(); // Only prevent default if we're actively dragging
+                }
+                const touch = e.touches[0];
+                handleDragMove(touch.clientX, touch.clientY);
+              }}
+            >
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 drop-shadow-2xl leading-tight">
                 {currentHeroItem.title || currentHeroItem.name}
               </h1>
@@ -522,22 +689,18 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
             </div>
           </div>
 
-          {/* Navigation Dots */}
+          {/* Navigation Dots - Visual only, no tap navigation */}
           {showNavigationDots && displayItems.length > 1 && (
             <div className="absolute bottom-8 right-8 flex space-x-2">
               {displayItems.map((_, index) => (
-                <button
+                <div
                   key={index}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSlideChange) onSlideChange(index);
-                  }}
                   className={`w-3 h-3 rounded-full transition-all ${
                     index === currentSlide 
                       ? 'bg-white scale-125' 
-                      : 'bg-white/40 hover:bg-white/60'
+                      : 'bg-white/40'
                   }`}
-                  aria-label={`Go to slide ${index + 1}`}
+                  aria-label={`Slide ${index + 1} indicator`}
                 />
               ))}
             </div>
@@ -561,13 +724,13 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
 
       {/* Horizontal Scroll View - Always visible (like ContentSection) */}
       <div className="relative">
-        {/* Scroll Arrows - show for both collapsed and expanded states */}
+        {/* Scroll Arrows - Hidden on mobile, smaller size, no background by default */}
         {enableHorizontalScroll && scrollState.showLeft && (
           <>
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
+            <div className="hidden md:block absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
             <button
               onClick={() => handleScroll('left')}
-              className="absolute -left-2 top-1/2 -translate-y-1/2 p-3 bg-black/25 backdrop-blur-sm text-white rounded-xl hover:bg-black/40 border border-gray-600/20 z-20 transition-all shadow-xl"
+              className="hidden md:block absolute left-2 top-1/2 -translate-y-1/2 p-2 text-white rounded-full hover:bg-black/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 z-20"
               aria-label="Scroll left"
             >
               <ChevronLeft size={20} />
@@ -577,10 +740,10 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
 
         {enableHorizontalScroll && scrollState.showRight && (
           <>
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
+            <div className="hidden md:block absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
             <button
               onClick={() => handleScroll('right')}
-              className="absolute -right-2 top-1/2 -translate-y-1/2 p-3 bg-black/25 backdrop-blur-sm text-white rounded-xl hover:bg-black/40 border border-gray-600/20 z-20 transition-all shadow-xl"
+              className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white rounded-full hover:bg-black/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 z-20"
               aria-label="Scroll right"
             >
               <ChevronRight size={20} />

@@ -41,8 +41,12 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragCurrent, setDragCurrent] = useState({ x: 0, y: 0 });
   const [touchStartTime, setTouchStartTime] = useState(0);
-  const dragThreshold = 40; // Reduced for better sensitivity
-  const tapTimeThreshold = 250; // Reduced for more responsive tap detection
+  const dragThreshold = 30; // Reduced for better sensitivity
+  const tapTimeThreshold = 150; // Reduced for more responsive tap detection
+  
+  // Arrow navigation state (desktop only)
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
   
   // Simplified interaction state - track clicks to determine behavior
   const [trailerStopped, setTrailerStopped] = useState<Record<number, boolean>>({});
@@ -112,18 +116,23 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
   const { isInHidden } = useWatchlistStore();
 
   // Filter content based on selectedFilter and hidden status
-  useEffect(() => {
-    let filteredContent = allPlatformContent.filter(item => !isInHidden(item.id)); // Filter out hidden items
+  const filteredContent = useMemo(() => {
+    let content = allPlatformContent.filter(item => !isInHidden(item.id)); // Filter out hidden items
     
     if (selectedFilter === 'movie') {
-      filteredContent = filteredContent.filter(item => item.media_type === 'movie');
+      content = content.filter(item => item.media_type === 'movie');
     } else if (selectedFilter === 'tv') {
-      filteredContent = filteredContent.filter(item => item.media_type === 'tv');
+      content = content.filter(item => item.media_type === 'tv');
     }
     
+    return content;
+  }, [selectedFilter, allPlatformContent, isInHidden]);
+
+  // Only reset slideshow when the actual filtered content changes (filter change or new content)
+  useEffect(() => {
     setPlatformContent(filteredContent);
     
-    // Reset to first slide when filter changes
+    // Reset to first slide only when filter changes or content changes
     if (filteredContent.length > 0) {
       setCurrentSlide(0);
       setIsManuallyControlled(false);
@@ -137,9 +146,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         if (timeout) clearTimeout(timeout);
       });
       // Stop any active trailers
-      if (filteredContent.length > 0) {
-        closeTrailer();
-      }
+      closeTrailer();
       setTrailerStopped({});
       setModalJustClosed({});
       
@@ -147,20 +154,35 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       if (textFadeTimeoutRef.current) {
         clearTimeout(textFadeTimeoutRef.current);
       }
-      
-      // Start trailer for first slide after 4 seconds (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
-      if (!isPaused && preferences.autoplayVideos && trailerKeys[filteredContent[0].id] && !trailerStopped[filteredContent[0].id]) {
-        timeoutRefs.current[filteredContent[0].id] = setTimeout(() => {
-          const item = filteredContent[0];
-          const trailerKey = trailerKeys[item.id];
+    }
+  }, [filteredContent, closeTrailer]);
+
+  // Start trailer for current slide when conditions change
+  useEffect(() => {
+    if (platformContent.length > 0) {
+      const currentContent = platformContent[currentSlide];
+      if (!currentContent) return;
+
+      // Start trailer for current slide after 4 seconds (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
+      if (!isPaused && preferences.autoplayVideos && trailerKeys[currentContent.id] && !trailerStopped[currentContent.id] && !isTextPermanentlyVisible) {
+        if (timeoutRefs.current[currentContent.id]) {
+          clearTimeout(timeoutRefs.current[currentContent.id]);
+        }
+        
+        timeoutRefs.current[currentContent.id] = setTimeout(() => {
+          const trailerKey = trailerKeys[currentContent.id];
           if (trailerKey) {
-            openTrailer(trailerKey, item.title || item.name || '', item.media_type as 'movie' | 'tv');
+            openTrailer(trailerKey, currentContent.title || currentContent.name || '', currentContent.media_type as 'movie' | 'tv');
           }
         }, 4000);
       }
       
       // Start text fade-out after 7 seconds (only if autoplay is enabled and not permanently visible)
-      if (preferences.autoplayVideos) {
+      if (preferences.autoplayVideos && !isTextPermanentlyVisible) {
+        if (textFadeTimeoutRef.current) {
+          clearTimeout(textFadeTimeoutRef.current);
+        }
+        
         textFadeTimeoutRef.current = setTimeout(() => {
           if (!isTextPermanentlyVisible) {
             setIsTextVisible(false);
@@ -168,7 +190,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         }, 7000);
       }
     }
-  }, [selectedFilter, allPlatformContent, trailerKeys, isTextPermanentlyVisible, isPaused, preferences.autoplayVideos, isInHidden]);
+  }, [platformContent, currentSlide, isPaused, preferences.autoplayVideos, trailerKeys, trailerStopped, isTextPermanentlyVisible, openTrailer]);
 
   // Auto-advance slides (pause when a section is expanded)
   useEffect(() => {
@@ -229,14 +251,15 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       }
     }
 
-    // Start new trailer immediately (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
+    // Start new trailer after showing cover content for 4 seconds (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
     if (!isPaused && preferences.autoplayVideos && newContent && trailerKeys[newContent.id] && !trailerStopped[newContent.id]) {
       timeoutRefs.current[newContent.id] = setTimeout(() => {
         const trailerKey = trailerKeys[newContent.id];
         const title = newContent.title || newContent.name || '';
         const mediaType = newContent.media_type as 'movie' | 'tv';
+        console.log(`Starting trailer for ${title} after 4 second cover display`);
         openTrailer(trailerKey, title, mediaType);
-      }, 0); // Start immediately
+      }, 4000); // Show cover content for 4 seconds before starting trailer
     }
   };
 
@@ -250,14 +273,62 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       clearTimeout(manualControlTimeoutRef.current);
     }
     
-    // Reset auto-advance after 15 seconds of inactivity
+    // Reset auto-advance after 60 seconds of inactivity (extended from 15 seconds)
     manualControlTimeoutRef.current = setTimeout(() => {
+      console.log('HeroSection: Resuming auto-advance after 60 seconds of inactivity');
       setIsManuallyControlled(false);
-    }, 15000);
+    }, 60000);
+  };
+
+  // Arrow navigation handlers (desktop only)
+  const handleArrowNavigation = (direction: 'left' | 'right') => {
+    if (direction === 'left' && currentSlide > 0) {
+      const prevIndex = currentSlide - 1;
+      console.log(`HeroSection left arrow navigation to slide ${prevIndex}`);
+      handleManualSlideChange(prevIndex);
+    } else if (direction === 'right' && currentSlide < platformContent.length - 1) {
+      const nextIndex = currentSlide + 1;
+      console.log(`HeroSection right arrow navigation to slide ${nextIndex}`);
+      handleManualSlideChange(nextIndex);
+    }
+  };
+
+  const handleMouseEnterLeftEdge = () => {
+    console.log('Mouse enter left edge:', { 
+      platformContentLength: platformContent.length, 
+      currentSlide, 
+      canNavigateLeft: currentSlide > 0 
+    });
+    if (platformContent.length > 1 && currentSlide > 0) {
+      console.log('Showing left arrow');
+      setShowLeftArrow(true);
+    } else {
+      console.log('Not showing left arrow - at first slide or only one item');
+    }
+  };
+
+  const handleMouseEnterRightEdge = () => {
+    console.log('Mouse enter right edge:', { 
+      platformContentLength: platformContent.length, 
+      currentSlide, 
+      canNavigateRight: currentSlide < platformContent.length - 1 
+    });
+    if (platformContent.length > 1 && currentSlide < platformContent.length - 1) {
+      console.log('Showing right arrow');
+      setShowRightArrow(true);
+    } else {
+      console.log('Not showing right arrow - at last slide or only one item');
+    }
+  };
+
+  const handleMouseLeaveArrows = () => {
+    setShowLeftArrow(false);
+    setShowRightArrow(false);
   };
 
   // Drag handlers
   const handleDragStart = (clientX: number, clientY: number) => {
+    console.log('HeroSection drag start:', clientX, clientY);
     setIsDragging(true);
     setDragStart({ x: clientX, y: clientY });
     setDragCurrent({ x: clientX, y: clientY });
@@ -267,6 +338,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
 
   const handleDragMove = (clientX: number, clientY: number) => {
     if (!isDragging) return;
+    console.log('HeroSection drag move:', clientX, clientY);
     setDragCurrent({ x: clientX, y: clientY });
   };
 
@@ -274,24 +346,33 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     if (!isDragging) return;
     
     const deltaX = dragCurrent.x - dragStart.x;
-    const deltaY = Math.abs(dragCurrent.y - dragStart.y);
+    const deltaY = dragCurrent.y - dragStart.y;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
     const touchDuration = Date.now() - touchStartTime;
     
-    // Enhanced swipe detection with better sensitivity
-    if (Math.abs(deltaX) > dragThreshold && deltaY < 100 && touchDuration > tapTimeThreshold) {
+    console.log(`HeroSection drag attempt: deltaX=${deltaX}, deltaY=${deltaY}, duration=${touchDuration}, threshold=${dragThreshold}`);
+    
+    // Improved directional gesture detection
+    const isHorizontalGesture = absDeltaX > dragThreshold && // Minimum horizontal movement
+                               absDeltaX > absDeltaY * 1.5 && // Horizontal movement must be 1.5x more than vertical
+                               touchDuration > tapTimeThreshold && // Minimum duration to avoid accidental triggers
+                               absDeltaY < 80; // Maximum vertical movement allowed
+    
+    if (isHorizontalGesture) {
       if (deltaX > 0) {
         // Swipe right - go to previous slide
         const prevIndex = (currentSlide - 1 + platformContent.length) % platformContent.length;
-        console.log(`Drag gesture detected: swiping right to slide ${prevIndex}`);
+        console.log(`HeroSection horizontal swipe detected: swiping right to slide ${prevIndex}`);
         handleManualSlideChange(prevIndex);
       } else {
         // Swipe left - go to next slide
         const nextIndex = (currentSlide + 1) % platformContent.length;
-        console.log(`Drag gesture detected: swiping left to slide ${nextIndex}`);
+        console.log(`HeroSection horizontal swipe detected: swiping left to slide ${nextIndex}`);
         handleManualSlideChange(nextIndex);
       }
     } else {
-      console.log(`Drag gesture not triggered: deltaX=${deltaX}, deltaY=${deltaY}, duration=${touchDuration}`);
+      console.log(`HeroSection swipe not triggered: absDeltaX=${absDeltaX}, absDeltaY=${absDeltaY}, ratio=${absDeltaX/absDeltaY}, duration=${touchDuration}`);
     }
     
     setIsDragging(false);
@@ -433,7 +514,8 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
   }), [platformContent, currentSlide, trailerStopped, trailerKeys, resumeTrailer]);
 
   const handleTextClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
+    // Don't prevent event propagation - let it bubble up to handleHeroClick
+    // which has the complete interaction logic including modal opening
     
     const currentContent = platformContent[currentSlide];
     if (!currentContent) return;
@@ -443,27 +525,31 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     
     if (isTrailerPlaying && !isTextVisible) {
       restoreTextAndShowCover(currentContent.id);
+      e.stopPropagation(); // Only stop propagation if we're just restoring text
     } else {
-      // Otherwise, just restore text permanently
+      // Otherwise, just restore text permanently but let the click bubble up
+      // so the main handleHeroClick can handle modal opening logic
       setIsTextVisible(true);
       setIsTextPermanentlyVisible(true);
       
       if (textFadeTimeoutRef.current) {
         clearTimeout(textFadeTimeoutRef.current);
       }
+      
+      // Don't stop propagation here - let handleHeroClick handle the modal opening
     }
   };
 
   const handleHeroClick = (e: React.MouseEvent | React.TouchEvent) => {
-    // Don't trigger actions if we were actually dragging
-    const touchDuration = Date.now() - touchStartTime;
+    // Don't trigger actions if we were actually dragging (significant movement)
     const distance = Math.sqrt(
       Math.pow(dragCurrent.x - dragStart.x, 2) + 
       Math.pow(dragCurrent.y - dragStart.y, 2)
     );
     
-    // If it was a long touch or significant movement, it was probably a drag, not a tap
-    if (isDragging && (touchDuration > tapTimeThreshold || distance > 20)) {
+    // Only consider it a drag if there was significant movement (not just time-based)
+    if (distance > 20) {
+      console.log('Click prevented due to drag movement:', distance);
       return;
     }
     
@@ -478,10 +564,47 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       return;
     }
     
-    // Allow clicking on text content to restore text
+    // Handle text content clicks for restoring text visibility
     if (target.closest('.hero-text-content')) {
       handleTextClick(e);
       return;
+    }
+    
+    // Check for border tap navigation (left/right 20% of hero section)
+    const heroElement = e.currentTarget as HTMLElement;
+    const rect = heroElement.getBoundingClientRect();
+    const clickX = 'clientX' in e ? e.clientX : e.touches[0].clientX;
+    const relativeX = clickX - rect.left;
+    const sectionWidth = rect.width;
+    const leftBorderWidth = sectionWidth * 0.2; // Left 20%
+    const rightBorderWidth = sectionWidth * 0.8; // Right 20% starts at 80%
+    
+    // Check if click is in left border area
+    if (relativeX <= leftBorderWidth && platformContent.length > 1) {
+      // Navigate to previous slide (only if not already at first slide)
+      if (currentSlide > 0) {
+        const prevIndex = currentSlide - 1;
+        console.log(`HeroSection left border tap: navigating to slide ${prevIndex}`);
+        handleManualSlideChange(prevIndex);
+        return;
+      } else {
+        console.log('HeroSection left border tap: already at first slide, no navigation');
+        return;
+      }
+    }
+    
+    // Check if click is in right border area
+    if (relativeX >= rightBorderWidth && platformContent.length > 1) {
+      // Navigate to next slide (only if not already at last slide)
+      if (currentSlide < platformContent.length - 1) {
+        const nextIndex = currentSlide + 1;
+        console.log(`HeroSection right border tap: navigating to slide ${nextIndex}`);
+        handleManualSlideChange(nextIndex);
+        return;
+      } else {
+        console.log('HeroSection right border tap: already at last slide, no navigation');
+        return;
+      }
     }
     
     const currentContent = platformContent[currentSlide];
@@ -489,45 +612,40 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     
     const isTrailerPlaying = isTrailerActive && trailerKeys[currentContent.id] && !trailerStopped[currentContent.id];
     const hasTrailerStopped = trailerStopped[currentContent.id];
-    const wasModalJustClosed = modalJustClosed[currentContent.id];
     const hasTrailerKey = !!trailerKeys[currentContent.id];
     
-    console.log('Hero section interaction:', {
+    console.log('Hero section center interaction:', {
       contentId: currentContent.id,
       isTrailerPlaying,
       hasTrailerStopped,
-      wasModalJustClosed,
       hasTrailerKey,
       showTrailer: isTrailerActive,
-      trailerStopped: trailerStopped[currentContent.id]
+      trailerStopped: trailerStopped[currentContent.id],
+      isTextVisible,
+      isTextPermanentlyVisible
     });
     
-    // New simplified interaction logic:
-    // 1. First tap when trailer is playing → Stop trailer
-    // 2. Second tap when trailer is stopped → Open modal  
-    // 3. When modal closes → Resume trailer
+    // Fixed interaction logic:
+    // 1. First tap when trailer is playing → Pause trailer, show cover with title and text
+    // 2. Second tap when trailer is paused/cover showing → Open modal
+    // 3. No trailer available → Open modal directly
     
     if (isTrailerPlaying) {
-      // First tap: Stop the trailer
-      console.log('First tap: Stopping trailer');
+      // First tap: Pause the trailer and show cover content
+      console.log('First tap: Pausing trailer and showing cover content');
       pauseTrailer(currentContent.id);
-      setIsTextVisible(true);
-      setIsTextPermanentlyVisible(true);
+      restoreTextAndShowCover(currentContent.id);
     } else if (hasTrailerKey && hasTrailerStopped) {
-      // Second tap: Stop any trailer and open modal
-      console.log('Second tap: Stopping trailer and opening modal');
-      pauseTrailer(currentContent.id);
+      // Second tap: Trailer is paused/cover showing, open modal
+      console.log('Second tap: Opening modal from cover state');
       onPlay(currentContent);
     } else if (!hasTrailerKey) {
       // No trailer available, open modal directly
-      console.log('No trailer available, opening modal');
+      console.log('No trailer available, opening modal directly');
       onPlay(currentContent);
     } else {
-      // Fallback case: Stop any trailer and open modal
-      console.log('Fallback: Stopping trailer and opening modal');
-      if (hasTrailerKey) {
-        pauseTrailer(currentContent.id);
-      }
+      // Fallback case: Open modal
+      console.log('Fallback: Opening modal');
       onPlay(currentContent);
     }
   };
@@ -558,13 +676,21 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
 
   return(
     <div 
-      className={`relative w-full h-[60vh] min-h-[455px] max-h-[555px] overflow-hidden rounded-2xl mb-8 ring-1 ring-gray-800/30 select-none transition-all duration-300 group focus:outline-none ${
+      className={`relative w-full h-[60vh] min-h-[455px] max-h-[555px] overflow-hidden rounded-2xl mb-8 ring-1 ring-gray-800/30 select-none transition-all duration-300 group focus:outline-none antialiased ${
         isDragging ? 'cursor-grabbing scale-[0.98]' : 'cursor-grab'
       }`}
+      style={{ 
+        // Fix border aliasing with proper sub-pixel rendering
+        backfaceVisibility: 'hidden',
+        transform: 'translateZ(0)',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale'
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={(e) => {
         setIsHovered(false);
         handleDragEnd();
+        handleMouseLeaveArrows();
       }}
       onClick={handleHeroClick}
       // Mouse drag events
@@ -574,14 +700,28 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       // Touch drag events
       onTouchStart={(e) => {
         const touch = e.touches[0];
+        console.log('HeroSection touch start:', touch.clientX, touch.clientY);
         handleDragStart(touch.clientX, touch.clientY);
       }}
       onTouchMove={(e) => {
+        if (isDragging) {
+          e.preventDefault(); // Only prevent default if we're actively dragging
+        }
         const touch = e.touches[0];
         handleDragMove(touch.clientX, touch.clientY);
       }}
-      onTouchEnd={handleDragEnd}
-      onTouchCancel={handleDragEnd}
+      onTouchEnd={(e) => {
+        if (isDragging) {
+          e.preventDefault(); // Only prevent default if we were dragging
+        }
+        handleDragEnd();
+      }}
+      onTouchCancel={(e) => {
+        if (isDragging) {
+          e.preventDefault(); // Only prevent default if we were dragging
+        }
+        handleDragEnd();
+      }}
     >
       {/* Background Image/Video */}
       <div 
@@ -678,23 +818,64 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         </div>
       )}
 
-      {/* Progress Indicators */}
+      {/* Desktop-only Arrow Navigation Indicators - Larger hover zones for better UX */}
+      {platformContent.length > 1 && (
+        <>
+          {/* Left Arrow - Hidden on mobile with expanded hover zone */}
+          <div 
+            className="hidden md:block absolute left-0 top-0 bottom-0 w-1/3 z-20"
+            onMouseEnter={handleMouseEnterLeftEdge}
+            onMouseLeave={handleMouseLeaveArrows}
+          >
+            {showLeftArrow && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleArrowNavigation('left');
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white rounded-full hover:bg-black/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            )}
+          </div>
+
+          {/* Right Arrow - Hidden on mobile with expanded hover zone */}
+          <div 
+            className="hidden md:block absolute right-0 top-0 bottom-0 w-1/3 z-20"
+            onMouseEnter={handleMouseEnterRightEdge}
+            onMouseLeave={handleMouseLeaveArrows}
+          >
+            {showRightArrow && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleArrowNavigation('right');
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white rounded-full hover:bg-black/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110"
+                aria-label="Next slide"
+              >
+                <ChevronRight size={20} />
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Progress Indicators - Visual only, no tap navigation */}
       {platformContent.length > 1 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
           <div className="flex space-x-2">
             {platformContent.map((_, index) => (
-              <button
+              <div
                 key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleManualSlideChange(index);
-                }}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   index === currentSlide 
                     ? 'bg-white w-8' 
-                    : 'bg-white/40 hover:bg-white/70'
+                    : 'bg-white/40'
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Slide ${index + 1} indicator`}
               />
             ))}
           </div>
@@ -704,13 +885,35 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       {/* Enhanced Content Information */}
       <div className="relative h-full flex items-end z-20">
         <div className="p-6 md:p-8 lg:p-10 max-w-4xl w-full">
-          {/* Clickable text content with fade effect */}
+          {/* Clickable text content with fade effect - drag events added for consistent swipe behavior */}
           <div 
             className={`hero-text-content cursor-pointer transition-all duration-1000 ease-in-out ${
               isTextVisible ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-2'
             }`}
-            onClick={handleTextClick}
-            onTouchEnd={handleTextClick}
+            // Remove text-specific click handlers - let parent hero click handler manage everything
+            // Add drag handlers to text content for consistent swipe behavior
+            // Note: No stopPropagation() so normal taps can bubble up to parent
+            onMouseDown={(e) => {
+              handleDragStart(e.clientX, e.clientY);
+            }}
+            onMouseMove={(e) => {
+              handleDragMove(e.clientX, e.clientY);
+            }}
+            onMouseUp={(e) => {
+              handleDragEnd();
+            }}
+            onTouchStart={(e) => {
+              const touch = e.touches[0];
+              console.log('Text content touch start:', touch.clientX, touch.clientY);
+              handleDragStart(touch.clientX, touch.clientY);
+            }}
+            onTouchMove={(e) => {
+              if (isDragging) {
+                e.preventDefault(); // Only prevent default if we're actively dragging
+              }
+              const touch = e.touches[0];
+              handleDragMove(touch.clientX, touch.clientY);
+            }}
           >
             {/* Title */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 drop-shadow-2xl leading-tight">

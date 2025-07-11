@@ -63,13 +63,17 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
   const [touchStartTime, setTouchStartTime] = useState(0);
   const [isTrailerPaused, setIsTrailerPaused] = useState(false);
   const [lastPlayPosition, setLastPlayPosition] = useState(0);
-  const dragThreshold = 40;
-  const tapTimeThreshold = 250;
+  const dragThreshold = 30;
+  const tapTimeThreshold = 150;
   
-  const timeoutRefs = useRef<Record<number, number>>({});
+  // Arrow navigation state for hero section (desktop only)
+  const [heroShowLeftArrow, setHeroShowLeftArrow] = useState(false);
+  const [heroShowRightArrow, setHeroShowRightArrow] = useState(false);
+  
+  const timeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const videoRefs = useRef<Record<number, HTMLIFrameElement | null>>({});
-  const manualControlTimeoutRef = useRef<number | null>(null);
-  const textFadeTimeoutRef = useRef<number | null>(null);
+  const manualControlTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: movies = [] } = useQuery({
     queryKey: ['trending', 'movie'],
@@ -335,8 +339,39 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
       clearTimeout(manualControlTimeoutRef.current);
     }
     manualControlTimeoutRef.current = setTimeout(() => {
+      console.log('PersonalizedSection: Resuming auto-advance after 60 seconds of inactivity');
       setIsManuallyControlled(false);
-    }, 30000);
+    }, 60000); // Extended from 30 seconds to 60 seconds
+  };
+
+  // Hero arrow navigation handlers (desktop only)
+  const handleHeroArrowNavigation = (direction: 'left' | 'right') => {
+    if (direction === 'left' && currentSlide > 0) {
+      const prevIndex = currentSlide - 1;
+      console.log(`PersonalizedSection left arrow navigation to slide ${prevIndex}`);
+      handleManualSlideChange(prevIndex);
+    } else if (direction === 'right' && currentSlide < combinedContent.length - 1) {
+      const nextIndex = currentSlide + 1;
+      console.log(`PersonalizedSection right arrow navigation to slide ${nextIndex}`);
+      handleManualSlideChange(nextIndex);
+    }
+  };
+
+  const handleHeroMouseEnterLeftEdge = () => {
+    if (combinedContent.length > 1 && currentSlide > 0) {
+      setHeroShowLeftArrow(true);
+    }
+  };
+
+  const handleHeroMouseEnterRightEdge = () => {
+    if (combinedContent.length > 1 && currentSlide < combinedContent.length - 1) {
+      setHeroShowRightArrow(true);
+    }
+  };
+
+  const handleHeroMouseLeaveArrows = () => {
+    setHeroShowLeftArrow(false);
+    setHeroShowRightArrow(false);
   };
 
   const toggleMute = () => {
@@ -362,22 +397,33 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
     if (!isDragging) return;
     
     const deltaX = dragCurrent.x - dragStart.x;
-    const deltaY = Math.abs(dragCurrent.y - dragStart.y);
+    const deltaY = dragCurrent.y - dragStart.y;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
     const touchDuration = Date.now() - touchStartTime;
     
-    // Enhanced swipe detection with better sensitivity
-    if (Math.abs(deltaX) > dragThreshold && deltaY < 100 && touchDuration > tapTimeThreshold) {
+    console.log(`PersonalizedSection drag attempt: deltaX=${deltaX}, deltaY=${deltaY}, duration=${touchDuration}, threshold=${dragThreshold}`);
+    
+    // Improved directional gesture detection
+    const isHorizontalGesture = absDeltaX > dragThreshold && // Minimum horizontal movement
+                               absDeltaX > absDeltaY * 1.5 && // Horizontal movement must be 1.5x more than vertical
+                               touchDuration > tapTimeThreshold && // Minimum duration to avoid accidental triggers
+                               absDeltaY < 80; // Maximum vertical movement allowed
+    
+    if (isHorizontalGesture) {
       if (deltaX > 0) {
         // Swipe right - go to previous slide
         const prevIndex = (currentSlide - 1 + combinedContent.length) % combinedContent.length;
-        console.log(`Expanded section drag gesture: swiping right to slide ${prevIndex}`);
+        console.log(`PersonalizedSection horizontal swipe detected: swiping right to slide ${prevIndex}`);
         handleManualSlideChange(prevIndex);
       } else {
         // Swipe left - go to next slide
         const nextIndex = (currentSlide + 1) % combinedContent.length;
-        console.log(`Expanded section drag gesture: swiping left to slide ${nextIndex}`);
+        console.log(`PersonalizedSection horizontal swipe detected: swiping left to slide ${nextIndex}`);
         handleManualSlideChange(nextIndex);
       }
+    } else {
+      console.log(`PersonalizedSection swipe not triggered: absDeltaX=${absDeltaX}, absDeltaY=${absDeltaY}, ratio=${absDeltaX/absDeltaY}, duration=${touchDuration}`);
     }
     
     setIsDragging(false);
@@ -453,15 +499,15 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
   };
 
   const handleHeroClick = (e: React.MouseEvent | React.TouchEvent) => {
-    // Don't trigger actions if we were actually dragging
-    const touchDuration = Date.now() - touchStartTime;
+    // Don't trigger actions if we were actually dragging (significant movement)
     const distance = Math.sqrt(
       Math.pow(dragCurrent.x - dragStart.x, 2) + 
       Math.pow(dragCurrent.y - dragStart.y, 2)
     );
     
-    // If it was a long touch or significant movement, it was probably a drag, not a tap
-    if (isDragging && (touchDuration > tapTimeThreshold || distance > 20)) {
+    // Only consider it a drag if there was significant movement (not just time-based)
+    if (distance > 20) {
+      console.log('PersonalizedSection click prevented due to drag movement:', distance);
       return;
     }
     
@@ -479,10 +525,47 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
       return;
     }
     
-    // Allow clicking on text content to restore text
+    // Handle text content clicks for restoring text visibility
     if (target.closest('.hero-text-content')) {
       handleTextClick(e);
       return;
+    }
+    
+    // Check for border tap navigation (left/right 20% of hero section)
+    const heroElement = e.currentTarget as HTMLElement;
+    const rect = heroElement.getBoundingClientRect();
+    const clickX = 'clientX' in e ? e.clientX : e.touches[0].clientX;
+    const relativeX = clickX - rect.left;
+    const sectionWidth = rect.width;
+    const leftBorderWidth = sectionWidth * 0.2; // Left 20%
+    const rightBorderWidth = sectionWidth * 0.8; // Right 20% starts at 80%
+    
+    // Check if click is in left border area
+    if (relativeX <= leftBorderWidth && combinedContent.length > 1) {
+      // Navigate to previous slide (only if not already at first slide)
+      if (currentSlide > 0) {
+        const prevIndex = currentSlide - 1;
+        console.log(`PersonalizedSection left border tap: navigating to slide ${prevIndex}`);
+        handleManualSlideChange(prevIndex);
+        return;
+      } else {
+        console.log('PersonalizedSection left border tap: already at first slide, no navigation');
+        return;
+      }
+    }
+    
+    // Check if click is in right border area
+    if (relativeX >= rightBorderWidth && combinedContent.length > 1) {
+      // Navigate to next slide (only if not already at last slide)
+      if (currentSlide < combinedContent.length - 1) {
+        const nextIndex = currentSlide + 1;
+        console.log(`PersonalizedSection right border tap: navigating to slide ${nextIndex}`);
+        handleManualSlideChange(nextIndex);
+        return;
+      } else {
+        console.log('PersonalizedSection right border tap: already at last slide, no navigation');
+        return;
+      }
     }
     
     const currentContent = combinedContent[currentSlide];
@@ -490,7 +573,7 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
     
     const isTrailerPlaying = showTrailer[currentContent.id] && trailerKeys[currentContent.id] && !isTrailerPaused;
     
-    console.log('Expanded hero section interaction:', {
+    console.log('PersonalizedSection center interaction:', {
       isTrailerPlaying,
       isTextVisible,
       isTrailerPaused,
@@ -918,11 +1001,24 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
             handleDragStart(touch.clientX, touch.clientY);
           }}
           onTouchMove={(e) => {
+            if (isDragging) {
+              e.preventDefault(); // Only prevent default if we're actively dragging
+            }
             const touch = e.touches[0];
             handleDragMove(touch.clientX, touch.clientY);
           }}
-          onTouchEnd={handleDragEnd}
-          onTouchCancel={handleDragEnd}
+          onTouchEnd={(e) => {
+            if (isDragging) {
+              e.preventDefault(); // Only prevent default if we were dragging
+            }
+            handleDragEnd();
+          }}
+          onTouchCancel={(e) => {
+            if (isDragging) {
+              e.preventDefault(); // Only prevent default if we were dragging
+            }
+            handleDragEnd();
+          }}
         >
           {combinedContent[currentSlide] && (
             <>
@@ -957,7 +1053,33 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
               <div className={`hero-text-content absolute bottom-0 left-0 right-0 p-6 transition-opacity duration-500 ${
                 isTextVisible ? 'opacity-100' : 'opacity-0'
               }`}>
-                <div className="max-w-2xl space-y-3 cursor-pointer" onClick={handleTextClick}>
+                <div 
+                  className="max-w-2xl space-y-3 cursor-pointer" 
+                  // Remove text-specific click handlers - let parent hero click handler manage everything
+                  // Add drag handlers to text content for consistent swipe behavior
+                  // Note: No stopPropagation() so normal taps can bubble up to parent
+                  onMouseDown={(e) => {
+                    handleDragStart(e.clientX, e.clientY);
+                  }}
+                  onMouseMove={(e) => {
+                    handleDragMove(e.clientX, e.clientY);
+                  }}
+                  onMouseUp={(e) => {
+                    handleDragEnd();
+                  }}
+                  onTouchStart={(e) => {
+                    const touch = e.touches[0];
+                    console.log('PersonalizedSection text content touch start:', touch.clientX, touch.clientY);
+                    handleDragStart(touch.clientX, touch.clientY);
+                  }}
+                  onTouchMove={(e) => {
+                    if (isDragging) {
+                      e.preventDefault(); // Only prevent default if we're actively dragging
+                    }
+                    const touch = e.touches[0];
+                    handleDragMove(touch.clientX, touch.clientY);
+                  }}
+                >
                   <div className="flex items-center space-x-4 text-sm text-gray-300">
                     {/* Release Year */}
                     {(combinedContent[currentSlide].release_date || combinedContent[currentSlide].first_air_date) && (

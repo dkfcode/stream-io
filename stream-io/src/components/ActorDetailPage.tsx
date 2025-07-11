@@ -209,8 +209,9 @@ const ActorDetailPage: React.FC<ActorDetailPageProps> = ({ actor, onBack }) => {
       clearTimeout(manualControlTimeoutRef.current);
     }
     manualControlTimeoutRef.current = setTimeout(() => {
+      console.log('ActorDetailPage: Resuming auto-advance after 60 seconds of inactivity');
       setIsManuallyControlled(false);
-    }, 30000);
+    }, 60000); // Extended from 30 seconds to 60 seconds
   };
 
   const toggleMute = () => {

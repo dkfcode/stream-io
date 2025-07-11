@@ -979,10 +979,10 @@ const ContentSection: React.FC<ContentSectionProps> = ({
       <div className="relative">
         {showLeftArrow && (
           <>
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
+            <div className="hidden md:block absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
             <button
               onClick={() => scroll('left')}
-              className="absolute -left-2 top-1/2 -translate-y-1/2 p-3 bg-black/25 backdrop-blur-sm text-white rounded-xl hover:bg-black/40 border border-gray-600/20 z-20 transition-all shadow-xl"
+              className="hidden md:block absolute left-2 top-1/2 -translate-y-1/2 p-2 text-white rounded-full hover:bg-black/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 z-20"
               aria-label="Scroll left"
             >
               <ChevronLeft size={20} />
@@ -992,10 +992,10 @@ const ContentSection: React.FC<ContentSectionProps> = ({
 
         {showRightArrow && (
           <>
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
+            <div className="hidden md:block absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
             <button
               onClick={() => scroll('right')}
-              className="absolute -right-2 top-1/2 -translate-y-1/2 p-3 bg-black/25 backdrop-blur-sm text-white rounded-xl hover:bg-black/40 border border-gray-600/20 z-20 transition-all shadow-xl"
+              className="hidden md:block absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white rounded-full hover:bg-black/40 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 z-20"
               aria-label="Scroll right"
             >
               <ChevronRight size={20} />
