@@ -504,7 +504,7 @@ function App() {
       <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
         <div className="flex flex-col h-screen">
           {/* Header with Search/Controls */}
-          <header className="bg-black/90 backdrop-blur-sm border-b border-purple-500/20 py-4 relative z-50">
+          <header className="bg-black/90 backdrop-blur-sm border-b border-black/20 py-4 relative z-50">
             <div className="px-4 sm:px-6 max-w-7xl mx-auto">
               {renderHeaderContent()}
             </div>
@@ -518,7 +518,7 @@ function App() {
           </main>
 
           {/* Navigation */}
-          <footer className="mt-auto bg-black/90 backdrop-blur-sm border-t border-purple-500/20 sticky bottom-0 z-50 safe-area-inset-bottom">
+          <footer className="mt-auto bg-black/90 backdrop-blur-sm border-t border-black/20 sticky bottom-0 z-50 safe-area-inset-bottom">
             <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
           </footer>
         </div>

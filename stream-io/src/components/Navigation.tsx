@@ -11,7 +11,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   const { t } = useI18n();
   
   return (
-    <nav className="w-full bg-toolbar border-t border-purple-500/20 z-50">
+    <nav className="w-full bg-toolbar border-t border-black/20 z-50">
       <div className="container mx-auto px-4 sm:px-6 h-full">
         <div className="flex justify-around items-center" style={{ height: '60px' }}>
           <button 
