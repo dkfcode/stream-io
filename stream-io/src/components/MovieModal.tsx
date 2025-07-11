@@ -315,8 +315,8 @@ const MovieModal: React.FC<MovieModalProps> = ({
                     }}
                     className={`flex flex-col items-center justify-center w-16 h-16 rounded-full transition-all duration-200 flex-shrink-0 ${
                       isInFavorite(item.id)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80'
+                        ? 'bg-purple-500/80 text-white border border-purple-400/40 hover:bg-purple-600/80'
+                        : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80 border border-white/20'
                     }`}
                     aria-label={isInFavorite(item.id) ? "Remove from Favorites" : "Add to Favorites"}
                   >

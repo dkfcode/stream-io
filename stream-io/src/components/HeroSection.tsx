@@ -52,10 +52,51 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
   const [trailerStopped, setTrailerStopped] = useState<Record<number, boolean>>({});
   const [modalJustClosed, setModalJustClosed] = useState<Record<number, boolean>>({});
   
+  // NEW: State to track favorite dropdown visibility
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [trailerEndTimeouts, setTrailerEndTimeouts] = useState<Record<number, ReturnType<typeof setTimeout>>>({});
+  
   const timeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const videoRefs = useRef<Record<number, HTMLIFrameElement | null>>({});
   const manualControlTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trailerEndTimeoutRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  // NEW: Callback for favorite button dropdown state
+  const handleDropdownStateChange = (isOpen: boolean) => {
+    console.log('HeroSection: Favorite dropdown state changed:', isOpen);
+    setIsDropdownOpen(isOpen);
+  };
+
+  // NEW: Handle trailer completion and resume slideshow
+  const handleTrailerEnd = (contentId: number) => {
+    console.log('HeroSection: Trailer ended for content:', contentId);
+    
+    // Show media cover after trailer ends
+    const currentContent = platformContent.find(item => item.id === contentId);
+    if (currentContent) {
+      restoreTextAndShowCover(contentId);
+    }
+    
+    // Resume slideshow after 5 seconds
+    if (trailerEndTimeoutRef.current[contentId]) {
+      clearTimeout(trailerEndTimeoutRef.current[contentId]);
+    }
+    
+    trailerEndTimeoutRef.current[contentId] = setTimeout(() => {
+      console.log('HeroSection: Resuming slideshow 5 seconds after trailer end');
+      // Only resume if we're still on the same content and dropdown is not open
+      const stillCurrentContent = platformContent[currentSlide]?.id === contentId;
+      if (stillCurrentContent && !isDropdownOpen) {
+        setIsManuallyControlled(false); // Resume auto-advance
+      }
+      
+      // Clean up timeout reference
+      if (trailerEndTimeoutRef.current[contentId]) {
+        delete trailerEndTimeoutRef.current[contentId];
+      }
+    }, 5000);
+  };
 
   // No need for useEffect, we'll call onModalClose directly when needed
 
@@ -109,6 +150,10 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       if (textFadeTimeoutRef.current) {
         clearTimeout(textFadeTimeoutRef.current);
       }
+      // NEW: Clean up trailer end timeouts
+      Object.values(trailerEndTimeoutRef.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
     };
   }, []);
 
@@ -173,6 +218,18 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
           const trailerKey = trailerKeys[currentContent.id];
           if (trailerKey) {
             openTrailer(trailerKey, currentContent.title || currentContent.name || '', currentContent.media_type as 'movie' | 'tv');
+            
+            // NEW: Set up trailer completion detection
+            // Most trailers are 2-3 minutes long, so we'll assume completion after 3 minutes
+            const trailerDuration = 180000; // 3 minutes in milliseconds
+            if (trailerEndTimeoutRef.current[currentContent.id]) {
+              clearTimeout(trailerEndTimeoutRef.current[currentContent.id]);
+            }
+            
+            trailerEndTimeoutRef.current[currentContent.id] = setTimeout(() => {
+              console.log(`Trailer assumed complete for ${currentContent.title || currentContent.name}`);
+              handleTrailerEnd(currentContent.id);
+            }, trailerDuration);
           }
         }, 4000);
       }
@@ -190,11 +247,11 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         }, 7000);
       }
     }
-  }, [platformContent, currentSlide, isPaused, preferences.autoplayVideos, trailerKeys, trailerStopped, isTextPermanentlyVisible, openTrailer]);
+  }, [platformContent, currentSlide, isPaused, preferences.autoplayVideos, trailerKeys, trailerStopped, isTextPermanentlyVisible, openTrailer, handleTrailerEnd]);
 
-  // Auto-advance slides (pause when a section is expanded)
+  // Auto-advance slides (pause when a section is expanded OR when favorite dropdown is open)
   useEffect(() => {
-    if (!isManuallyControlled && !isPaused && platformContent.length > 1) {
+    if (!isManuallyControlled && !isPaused && !isDropdownOpen && platformContent.length > 1) {
       const interval = setInterval(() => {
         setCurrentSlide((prev) => {
           const nextSlide = (prev + 1) % platformContent.length;
@@ -205,7 +262,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
 
       return () => clearInterval(interval);
     }
-  }, [isManuallyControlled, isPaused, platformContent.length]);
+  }, [isManuallyControlled, isPaused, isDropdownOpen, platformContent.length]);
 
   // Stop all trailers when paused
   useEffect(() => {
@@ -243,11 +300,16 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       }
     }
 
-    // Stop current trailer
+    // Stop current trailer and clean up trailer end timeout
     if (currentContent) {
       closeTrailer();
       if (timeoutRefs.current[currentContent.id]) {
         clearTimeout(timeoutRefs.current[currentContent.id]);
+      }
+      // NEW: Clean up trailer end timeout when slide changes
+      if (trailerEndTimeoutRef.current[currentContent.id]) {
+        clearTimeout(trailerEndTimeoutRef.current[currentContent.id]);
+        delete trailerEndTimeoutRef.current[currentContent.id];
       }
     }
 
@@ -259,6 +321,17 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         const mediaType = newContent.media_type as 'movie' | 'tv';
         console.log(`Starting trailer for ${title} after 4 second cover display`);
         openTrailer(trailerKey, title, mediaType);
+        
+        // NEW: Set up trailer completion detection for new slide
+        const trailerDuration = 180000; // 3 minutes in milliseconds
+        if (trailerEndTimeoutRef.current[newContent.id]) {
+          clearTimeout(trailerEndTimeoutRef.current[newContent.id]);
+        }
+        
+        trailerEndTimeoutRef.current[newContent.id] = setTimeout(() => {
+          console.log(`Trailer assumed complete for ${title}`);
+          handleTrailerEnd(newContent.id);
+        }, trailerDuration);
       }, 4000); // Show cover content for 4 seconds before starting trailer
     }
   };
@@ -427,6 +500,12 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     if (timeoutRefs.current[contentId]) {
       clearTimeout(timeoutRefs.current[contentId]);
     }
+    
+    // NEW: Clean up trailer end timeout when trailer is manually stopped
+    if (trailerEndTimeoutRef.current[contentId]) {
+      clearTimeout(trailerEndTimeoutRef.current[contentId]);
+      delete trailerEndTimeoutRef.current[contentId];
+    }
   };
 
   const restoreTextAndShowCover = (contentId: number) => {
@@ -462,6 +541,17 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       const title = currentContent.title || currentContent.name || '';
       const mediaType = currentContent.media_type as 'movie' | 'tv';
       openTrailer(trailerKey, title, mediaType);
+      
+      // NEW: Set up trailer completion detection when resuming
+      const trailerDuration = 180000; // 3 minutes in milliseconds
+      if (trailerEndTimeoutRef.current[contentId]) {
+        clearTimeout(trailerEndTimeoutRef.current[contentId]);
+      }
+      
+      trailerEndTimeoutRef.current[contentId] = setTimeout(() => {
+        console.log(`Resumed trailer assumed complete for ${title}`);
+        handleTrailerEnd(contentId);
+      }, trailerDuration);
     }
     setModalJustClosed(prev => ({ ...prev, [contentId]: false }));
     
@@ -798,6 +888,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
           item={currentContent}
           size="md"
           ariaLabel="Add to Favorite or manage lists"
+          onDropdownStateChange={handleDropdownStateChange}
         />
       </div>
 
@@ -885,23 +976,13 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       {/* Enhanced Content Information */}
       <div className="relative h-full flex items-end z-20">
         <div className="p-6 md:p-8 lg:p-10 max-w-4xl w-full">
-          {/* Clickable text content with fade effect - drag events added for consistent swipe behavior */}
+          {/* Text content with desktop text selection enabled */}
           <div 
-            className={`hero-text-content cursor-pointer transition-all duration-1000 ease-in-out ${
+            className={`hero-text-content cursor-pointer md:cursor-default transition-all duration-1000 ease-in-out select-none md:select-text ${
               isTextVisible ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-2'
             }`}
-            // Remove text-specific click handlers - let parent hero click handler manage everything
-            // Add drag handlers to text content for consistent swipe behavior
-            // Note: No stopPropagation() so normal taps can bubble up to parent
-            onMouseDown={(e) => {
-              handleDragStart(e.clientX, e.clientY);
-            }}
-            onMouseMove={(e) => {
-              handleDragMove(e.clientX, e.clientY);
-            }}
-            onMouseUp={(e) => {
-              handleDragEnd();
-            }}
+            // Mobile: Keep touch handlers for swipe functionality
+            // Desktop: Touch events won't interfere with text selection
             onTouchStart={(e) => {
               const touch = e.touches[0];
               console.log('Text content touch start:', touch.clientX, touch.clientY);
@@ -914,8 +995,11 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
               const touch = e.touches[0];
               handleDragMove(touch.clientX, touch.clientY);
             }}
+            onTouchEnd={(e) => {
+              handleDragEnd();
+            }}
           >
-            {/* Title */}
+            {/* Title - Desktop selectable */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 drop-shadow-2xl leading-tight">
               {title}
             </h1>
@@ -938,7 +1022,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description - Desktop selectable */}
             <p className="text-gray-200 text-sm md:text-base mb-6 max-w-2xl drop-shadow-lg leading-relaxed line-clamp-3">
               {currentContent?.overview || 'No description available.'}
             </p>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, Check, Bookmark, Clock, Eye, EyeOff } from 'lucide-react';
+import { Star, Check, Bookmark, Clock, Eye, EyeOff, Plus } from 'lucide-react';
 import type { SearchResult } from '../types/tmdb';
 import { useWatchlistStore } from '../stores/watchlistStore';
 import ListSelectionDialog from './ListSelectionDialog';
@@ -9,13 +9,15 @@ interface StandardizedFavoriteButtonProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   ariaLabel?: string;
+  onDropdownStateChange?: (isOpen: boolean) => void;
 }
 
 const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
   item,
   size = 'md',
   className = '',
-  ariaLabel
+  ariaLabel,
+  onDropdownStateChange
 }) => {
   const [showListDialog, setShowListDialog] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -35,12 +37,14 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
     removeFromFavorite, 
     isInFavorite,
     addToWatchLater,
+    isInWatchLater,
     markAsWatched,
     addToHidden,
     removeFromHidden,
     isInHidden,
     isItemInWatchlist,
-    watchlists
+    watchlists,
+    isInWatched
   } = useWatchlistStore();
 
   // Size configurations
@@ -49,85 +53,94 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
       container: 'w-6 h-6', 
       icon: 'w-3 h-3', 
       buttonHeight: 24,
-      expandedHeight: 120, // 24 + (4 buttons * 24px each) - 3 dropdown lists + More Lists
       buttonSpacing: 24
     },
     md: { 
       container: 'w-7 h-7', 
       icon: 'w-3 h-3', 
       buttonHeight: 28,
-      expandedHeight: 140, // 28 + (4 buttons * 28px each) - 3 dropdown lists + More Lists
       buttonSpacing: 28
     },
     lg: { 
       container: 'w-10 h-10', 
       icon: 'w-4 h-4', 
       buttonHeight: 40,
-      expandedHeight: 200, // 40 + (4 buttons * 40px each) - 3 dropdown lists + More Lists
       buttonSpacing: 40
     }
   };
 
   const currentSize = sizeConfig[size];
 
-  // Get available list options (simplified for current store)
+  // Get available list options (excluding favorite since main button handles that)
   const dropdownLists = [
     { id: 'watch-later', name: 'Watch Later', isDefault: true },
     { id: 'watched', name: 'Watched', isDefault: true },
     { id: 'hidden', name: 'Hidden', isDefault: true }
   ];
 
-  // Get current state
+  // Get current state  
   const isInFavoriteList = isInFavorite(item.id);
-  const isInWatchLater = isItemInWatchlist(item.id, item.media_type as 'movie' | 'tv');
+  const isInWatchLaterList = isInWatchLater(item.id);
+  const isInWatchedList = isInWatched(item.id);
   const isInHiddenList = isInHidden(item.id);
-  const isInOtherLists = isInWatchLater || isInHiddenList;
+  const isInOtherLists = isInWatchLaterList || isInWatchedList || isInHiddenList;
+
+  // Check if item is in any custom lists (non-default lists)
+  const isInCustomLists = watchlists.some(watchlist => 
+    watchlist.list_type === 'custom' && 
+    watchlist.items?.some(watchlistItem => 
+      watchlistItem.tmdb_id === item.id && watchlistItem.media_type === item.media_type
+    )
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         handleCloseDropdown();
       }
     };
 
     if (showDropdown) {
+      // Handle both mouse and touch events for better mobile support
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [showDropdown]);
+
+  // NEW: Notify parent component of dropdown state changes
+  useEffect(() => {
+    if (onDropdownStateChange) {
+      onDropdownStateChange(showDropdown);
+    }
+  }, [showDropdown, onDropdownStateChange]);
 
   // Determine visual state
   const getButtonState = () => {
     if (isInFavoriteList) {
-      // In favorite list - show star with purple background
+      // In favorite list - show filled star with white color and purple background
       return {
         icon: Star,
-        bg: 'bg-purple-600',
-        text: 'text-white',
-        border: 'border-purple-600',
-        hover: 'hover:bg-purple-700'
-      };
-    } else if (isInOtherLists) {
-      // In other lists but not favorite - show check circle with purple background
-      return {
-        icon: Check,
-        bg: 'bg-purple-600',
-        text: 'text-white', 
-        border: 'border-purple-600',
-        hover: 'hover:bg-purple-700'
+        bg: 'bg-purple-500/80', // Purple background when in favorites
+        text: 'text-white', // White star when in favorites
+        border: 'border-purple-400/40',
+        hover: 'hover:bg-purple-600/80',
+        fillStar: true // Fill the star when in favorites
       };
     } else {
-      // Default state - show star with black background
+      // Not in favorites - show unfilled star with white color and black background
       return {
         icon: Star,
         bg: 'bg-black/60',
-        text: 'text-white',
+        text: 'text-white', // White color when not in favorites
         border: 'border-white/20',
-        hover: 'hover:bg-gray-700/80'
+        hover: 'hover:bg-gray-700/80',
+        fillStar: false // Don't fill the star when not in favorites
       };
     }
   };
@@ -141,9 +154,9 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
       case 'favorite':
         return Star;
       case 'watch-later':
-        return Clock;
-      case 'watched-already':
-        return Eye; // Using Eye icon for "Seen" instead of Check
+        return Bookmark; // Changed from Clock to Bookmark as requested
+      case 'watched':
+        return Check; // Changed from Eye to Check as requested
       case 'hidden':
         return EyeOff;
       default:
@@ -164,13 +177,7 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
         is_watched: false
       };
 
-      if (listId === 'favorite') {
-        if (isInFavoriteList) {
-          await removeFromFavorite(item.id);
-        } else {
-          await addToFavorite(watchlistItem);
-        }
-      } else if (listId === 'watch-later') {
+      if (listId === 'watch-later') {
         await addToWatchLater(watchlistItem);
       } else if (listId === 'watched') {
         await markAsWatched(watchlistItem);
@@ -205,13 +212,18 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
 
   // Handle dropdown close with animation
   const handleCloseDropdown = () => {
+    setShowDropdown(false);
+    setIsPressed(false);
     setAnimationPhase('contracting');
+    
+    // Notify parent that dropdown is closed
+    if (onDropdownStateChange) {
+      onDropdownStateChange(false);
+    }
+    
     setTimeout(() => {
-      setShowDropdown(false);
       setAnimationPhase('idle');
-      setIsDragging(false);
-      setHighlightedIndex(0);
-    }, 200);
+    }, 300);
   };
 
   // Handle long press detection
@@ -265,27 +277,31 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
       longPressTimerRef.current = null;
     }
 
-    if (longPressTriggered.current && showDropdown) {
-      // Handle drag selection
-      if (isDragging) {
-        if (highlightedIndex === dropdownLists.length) {
-          // "More Lists" button selected
-          handleMoreLists();
-        } else {
-          // Regular list button selected
-          const selectedList = dropdownLists[highlightedIndex];
-          if (selectedList) {
-            handleListToggle(selectedList.id);
-          }
+    // Check if this was a long press that triggered dropdown AND we're dragging
+    if (longPressTriggered.current && isDragging && showDropdown) {
+      // Handle drag selection within dropdown
+      if (highlightedIndex === dropdownLists.length) {
+        // "More Lists" button selected
+        handleMoreLists();
+      } else if (highlightedIndex < dropdownLists.length) {
+        // Regular list button selected
+        const selectedList = dropdownLists[highlightedIndex];
+        if (selectedList) {
+          handleListToggle(selectedList.id);
         }
-      } else {
-        // Just close dropdown if no drag occurred
-        handleCloseDropdown();
       }
-    } else if (!longPressTriggered.current) {
-      // Handle normal tap
+    } else if (longPressTriggered.current && !isDragging && showDropdown) {
+      // Long press was triggered but no dragging occurred - keep dropdown open
+      // Reset dragging state for next interaction
+      setIsDragging(false);
+      setHighlightedIndex(0);
+    } else {
+      // Handle normal tap (either dropdown not open, or normal tap on main button)
       handleTap();
     }
+    
+    // Reset long press state for next interaction
+    longPressTriggered.current = false;
   };
 
   const handleTap = async () => {
@@ -317,6 +333,13 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    // Don't close dropdown if it's already expanded and visible
+    // This prevents auto-dismiss when mouse moves into dropdown area on desktop
+    if (showDropdown && animationPhase === 'expanded') {
+      // Dropdown is already open and fully expanded, don't close it
+      // Let the outside click detection handle closing instead
+      return;
+    }
     if (showDropdown) {
       handleCloseDropdown();
     }
@@ -339,13 +362,24 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
 
   // Calculate dynamic height for animation
   const getDropdownHeight = () => {
-    if (animationPhase === 'expanding') {
-      return currentSize.expandedHeight;
-    } else if (animationPhase === 'expanded') {
-      return currentSize.expandedHeight;
+    if (animationPhase === 'idle') {
+      return currentSize.buttonHeight;
+    }
+    
+    // Calculate actual number of items being displayed
+    const baseItems = dropdownLists.length; // 3 default items (watch-later, watched, hidden) - favorite handled by main button
+    const customListIndicator = isInCustomLists ? 1 : 0; // Only add if custom lists exist
+    const plusButton = 1; // Always present
+    const totalItems = baseItems + customListIndicator + plusButton;
+    
+    const dynamicHeight = currentSize.buttonHeight + (totalItems * currentSize.buttonSpacing);
+    
+    if (animationPhase === 'expanding' || animationPhase === 'expanded') {
+      return dynamicHeight;
     } else if (animationPhase === 'contracting') {
       return currentSize.buttonHeight;
     }
+    
     return currentSize.buttonHeight;
   };
 
@@ -362,7 +396,7 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
           width: currentSize.container.split(' ')[0].replace('w-', '') === '6' ? '24px' : 
                  currentSize.container.split(' ')[0].replace('w-', '') === '7' ? '28px' : '40px',
           height: `${getDropdownHeight()}px`,
-          maxHeight: showDropdown ? `${currentSize.expandedHeight}px` : `${currentSize.buttonHeight}px`,
+          maxHeight: showDropdown ? `${getDropdownHeight()}px` : `${currentSize.buttonHeight}px`,
           transition: animationPhase === 'expanding' || animationPhase === 'contracting' 
             ? 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
             : 'none'
@@ -385,6 +419,7 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
           className={`
             absolute top-0 left-0 right-0
             flex items-center justify-center transition-all duration-200
+            ${showDropdown ? 'z-10' : 'z-0'}
             ${buttonState.text}
             ${buttonState.hover}
             ${isPressed ? 'scale-95' : 'scale-100'}
@@ -393,7 +428,7 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
           style={{ height: `${currentSize.buttonHeight}px` }}
           aria-label={ariaLabel || (isInFavoriteList ? "Remove from Favorite" : "Add to Favorite")}
         >
-          <IconComponent className={`${currentSize.icon} ${buttonState.icon === Star ? 'fill-current' : ''}`} />
+          <IconComponent className={`${currentSize.icon} ${buttonState.fillStar ? 'fill-current' : ''}`} />
         </button>
 
         {/* Expanded Button List */}
@@ -409,50 +444,68 @@ const StandardizedFavoriteButton: React.FC<StandardizedFavoriteButtonProps> = ({
             {dropdownLists.map((list, index) => {
               const ListIcon = getListIcon(list.id);
               const isItemInList = list.id === 'hidden' ? isInHiddenList : 
-                                   list.id === 'watch-later' ? isInWatchLater : 
+                                   list.id === 'watch-later' ? isInWatchLaterList : 
+                                   list.id === 'watched' ? isInWatchedList :
                                    false;
               const isHighlighted = highlightedIndex === index && isDragging;
               
               return (
-                <div
+                <button
                   key={list.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleListToggle(list.id);
+                  }}
                   className={`
-                    flex items-center justify-center transition-all duration-150
+                    relative flex items-center justify-center transition-all duration-150 cursor-pointer hover:bg-white/10
                     ${isHighlighted ? 'bg-white/20 scale-110' : ''}
-                    ${isItemInList ? 'text-yellow-300' : buttonState.text}
+                    ${isItemInList ? 'text-amber-400' : 'text-white'}
                   `}
                   style={{ 
                     height: `${currentSize.buttonSpacing}px`,
                     transform: isHighlighted ? 'scale(1.1)' : 'scale(1)'
                   }}
+                  aria-label={`${list.name} - ${isItemInList ? 'Remove from' : 'Add to'} ${list.name}`}
                 >
                   <ListIcon 
                     className={`
                       ${currentSize.icon} 
-                      ${isItemInList && list.id === 'favorite' ? 'fill-current' : ''}
                       ${isHighlighted ? 'drop-shadow-lg' : ''}
                     `} 
                   />
-                </div>
+                </button>
               );
             })}
             
-            {/* More Lists Button */}
-            <div
+            {/* Custom List Indicator - Show vertical 3 dots when item is in custom lists */}
+            {isInCustomLists && (
+              <div className="flex items-center justify-center" style={{ height: `${currentSize.buttonSpacing}px` }}>
+                <svg className={`${currentSize.icon} text-amber-400`} fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </div>
+            )}
+            
+            {/* Add to Custom Lists Button - Plus icon */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleMoreLists();
+              }}
               className={`
-                flex items-center justify-center transition-all duration-150
-                ${highlightedIndex === dropdownLists.length && isDragging ? 'bg-white/20 scale-110' : ''}
-                ${buttonState.text}
+                flex items-center justify-center transition-all duration-150 cursor-pointer hover:bg-white/10
+                text-white
               `}
               style={{ 
                 height: `${currentSize.buttonSpacing}px`,
-                transform: highlightedIndex === dropdownLists.length && isDragging ? 'scale(1.1)' : 'scale(1)'
+                transform: 'scale(1)' // Always normal scale, never highlighted
               }}
+              aria-label="Add to Custom List"
             >
-              <svg className={currentSize.icon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </div>
+              <Plus className={currentSize.icon} />
+            </button>
           </div>
         )}
       </div>

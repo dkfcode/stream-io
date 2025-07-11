@@ -139,6 +139,25 @@ body {
   color: var(--accent-primary);
 }
 
+/* Hero section text selection - Desktop only */
+@media (min-width: 768px) {
+  .hero-text-content {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+  
+  .hero-text-content h1,
+  .hero-text-content p,
+  .hero-text-content span {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+}
+
 /* Unified toolbar theme - true black for seamless blending */
 .bg-toolbar {
   background: rgba(0, 0, 0, 0.98);

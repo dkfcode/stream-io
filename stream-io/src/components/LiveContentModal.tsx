@@ -292,8 +292,8 @@ const LiveContentModal: React.FC<LiveContentModalProps> = ({
                 onClick={() => handleWatchlistAction('favorite', !isFavorited)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                   isFavorited 
-                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-                    : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    ? 'bg-purple-500/80 hover:bg-purple-600/80 text-white border border-purple-400/40' 
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-white/20'
                 }`}
               >
                 <Star className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />

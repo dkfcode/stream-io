@@ -364,7 +364,7 @@ const ChannelNetworkModal: React.FC<ChannelNetworkModalProps> = ({
                     onClick={handleToggleFavorite}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors border ${
                       isChannelFavorite
-                        ? 'bg-purple-600 border-purple-600 text-white hover:bg-purple-700'
+                        ? 'bg-purple-500/80 border-purple-400/40 text-white hover:bg-purple-600/80'
                         : 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800/50 hover:border-gray-500'
                     }`}
                   >

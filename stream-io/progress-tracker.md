@@ -3,7 +3,70 @@
 **Last Updated:** January 19, 2025  
 **Current Status:** ✅ **RUNNING LOCALLY ON LOCALHOST** - Development server successfully started and running
 
-## ✅ **LATEST FIX: Hero Section Modal Opening Issue - January 19, 2025** ✅
+## ✅ **LATEST ENHANCEMENT: Desktop Text Selection in Hero Section - January 19, 2025** ✅
+
+**Enhancement:** Enabled text selection for hero section title and description on desktop devices while preserving mobile touch functionality
+**Status:** ✅ COMPLETE - Users can now select and copy text from hero section titles and descriptions on desktop
+
+**User Request:** "On desktop, I should be able to select text in the hero section (i.e. title and description)"
+
+**Technical Implementation:**
+1. **✅ Desktop Text Selection Enabled:**
+   - Added CSS media query for desktop screens (min-width: 768px)
+   - Applied `user-select: text` and cross-browser variants for text selection
+   - Targets hero section title (h1), description (p), and metadata (span) elements
+
+2. **✅ Responsive Cursor Behavior:**
+   - Mobile: `cursor-pointer` for touch interaction
+   - Desktop: `cursor-default` to indicate text selection capability
+   - Maintains visual consistency across different device types
+
+3. **✅ Preserved Mobile Functionality:**
+   - Touch handlers remain active for swipe navigation on mobile
+   - Text selection disabled on mobile to prevent interference with touch gestures
+   - Maintains all existing hero section interaction patterns
+
+4. **✅ Cross-Browser Compatibility:**
+   - Added vendor prefixes: `-webkit-user-select`, `-moz-user-select`, `-ms-user-select`
+   - Comprehensive browser support for text selection functionality
+   - Proper fallback behavior for older browsers
+
+**CSS Implementation:**
+```css
+/* Hero section text selection - Desktop only */
+@media (min-width: 768px) {
+  .hero-text-content {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+  
+  .hero-text-content h1,
+  .hero-text-content p,
+  .hero-text-content span {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+}
+```
+
+**User Experience Impact:**
+- ✅ **Desktop Text Selection:** Users can now select and copy hero section text content
+- ✅ **Mobile Touch Preserved:** Touch gestures and swipe navigation remain unchanged
+- ✅ **Intuitive Interaction:** Desktop cursor changes to indicate text selection capability
+- ✅ **Cross-Platform Consistency:** Appropriate behavior for each device type
+- ✅ **Accessibility Enhancement:** Improved accessibility for users who need to copy text content
+
+**Files Modified:**
+- ✅ `src/components/HeroSection.tsx`: Updated text container classes and cursor behavior
+- ✅ `src/index.css`: Added CSS media query for desktop text selection
+
+**Status:** ✅ DESKTOP TEXT SELECTION COMPLETE - Hero section text is now selectable on desktop with preserved mobile functionality!
+
+## ✅ **PREVIOUS FIX: Hero Section Modal Opening Issue - January 19, 2025** ✅
 
 **Issue Fixed:** Hero section second tap not opening modal when tapping on text content areas after trailer is paused
 **Status:** ✅ COMPLETE - Modal opening now works correctly on text content areas after trailer is stopped
@@ -3546,3 +3609,275 @@ Function calls → getApiClient().get() → Initialized client with Bearer token
 - ✅ **Environment variables properly configured** - VITE_TMDB_ACCESS_TOKEN correctly set  
 - ✅ **Backend server running** - Node.js process active (PID 1)
 - ❌ **Database connection killing server** - Pool error handler calling `
+
+## ✅ **LATEST FIX: Favorite Button Dropdown Stay Open Issue - January 19, 2025** ✅
+
+**Issue Fixed:** Favorite button dropdown dismissing immediately when releasing long press instead of staying open
+**Status:** ✅ COMPLETE - Dropdown now stays open after long press and only closes when tapping outside
+
+**User Report:** "If I long press the favorite button to bring down the custom list dropdown, it should stay presented and await another tap. Right now I am noticing it dismiss when I release on both mobile and desktop. If I tap anywhere outside while the dropdown is being shown, it should collapse and not add to any list as user focus changed"
+
+**Expected Behavior Flow:**
+1. Long press favorite button → Dropdown opens and shows list options
+2. Release long press → Dropdown stays open and awaits user interaction
+3. Tap outside dropdown → Dropdown closes without adding to any list
+4. Drag to select list option → Dropdown closes and adds to selected list
+
+**Issue Identified:**
+- `handlePressEnd` function was calling `handleCloseDropdown()` when long press was triggered but no dragging occurred
+- This caused the dropdown to immediately close when the user released their long press
+- Outside click detection only handled mouse events, not touch events for mobile devices
+
+**Technical Fix:**
+```javascript
+// Before (Problematic):
+if (longPressTriggered.current && showDropdown) {
+  if (isDragging) {
+    // Handle drag selection
+  } else {
+    handleCloseDropdown(); // Always closed dropdown on release
+  }
+}
+
+// After (Fixed):
+if (longPressTriggered.current && showDropdown) {
+  if (isDragging) {
+    // Handle drag selection and close dropdown
+  } else {
+    // Keep dropdown open if no drag occurred - user just did a long press
+    // The dropdown will stay open and close only when clicking outside
+    setIsDragging(false);
+    setHighlightedIndex(0);
+  }
+}
+```
+
+**Enhanced Mobile Support:**
+```javascript
+// Before (Mouse only):
+document.addEventListener('mousedown', handleClickOutside);
+
+// After (Mouse + Touch):
+document.addEventListener('mousedown', handleClickOutside);
+document.addEventListener('touchstart', handleClickOutside);
+```
+
+**User Experience Impact:**
+- ✅ **Dropdown Persistence:** Long press now properly keeps dropdown open after release
+- ✅ **Mobile Compatibility:** Enhanced touch event handling for better mobile experience
+- ✅ **Intuitive Interaction:** Dropdown only closes when tapping outside or making a selection
+- ✅ **Consistent Behavior:** Same interaction pattern works on both desktop and mobile
+- ✅ **User Control:** Users can take their time to select from dropdown options
+
+**Files Modified:**
+- ✅ `src/components/StandardizedFavoriteButton.tsx`: Fixed handlePressEnd logic and enhanced outside click detection
+
+**Status:** ✅ FAVORITE BUTTON DROPDOWN BEHAVIOR FIXED - Long press now properly keeps dropdown open for user interaction!
+
+**Additional Desktop Fix (January 19, 2025):**
+- **Issue:** Desktop dropdown auto-dismissing immediately after opening due to mouse cursor moving into dropdown area
+- **Root Cause:** `onMouseLeave` event triggering `handlePressCancel()` when mouse moved from button to dropdown
+- **Solution:** Modified `handlePressCancel()` to not close dropdown when it's already expanded and visible
+- **Result:** Desktop dropdown now stays open properly until user clicks outside or makes a selection
+
+**Click-to-Select Functionality Added (January 19, 2025):**
+- **Issue:** Dropdown items were not clickable - only drag selection worked
+- **Root Cause:** Dropdown items were rendered as static `<div>` elements without click handlers
+- **Solution:** Converted all dropdown items to `<button>` elements with proper onClick handlers
+- **Enhanced:** Added hover effects and ARIA labels for better accessibility
+- **Result:** Users can now directly click any dropdown icon to select that list and dismiss dropdown
+
+**UI/UX Improvements (January 19, 2025):**
+- **Issue:** Button turned purple after adding items, inconsistent visual feedback
+- **Button Styling:** Changed to always maintain default black background, never turns purple
+- **List Item Colors:** Changed from yellow to gold (`text-amber-400`) for better visual appeal
+- **Custom List Indicator:** Added small gold checkmark below hide icon when item is in any custom list
+- **More Lists Button:** Prevented from appearing highlighted during drag interactions (always for adding to custom lists)
+- **Result:** Cleaner, more intuitive visual feedback with gold indicating list membership
+
+## ✅ **LATEST FIX: Comprehensive Favorite Button Functionality - January 19, 2025** ✅
+
+**Issue Fixed:** Multiple favorite button functionality issues including missing favorite option in dropdown, incorrect icons, and custom list indicator
+**Status:** ✅ COMPLETE - Favorite button now has complete functionality with correct dropdown order and icons
+
+**User Requirements Implemented:**
+1. **Default tap on favorite icon** → Adds item to favorite list ✅
+2. **Long press dropdown order** → Favorite (star), Watch Later (bookmark), Watched (checkmark), Hide (slash eye), Plus (custom lists) ✅
+3. **Correct icon mapping** → Updated all icons to match requested specifications ✅
+4. **Custom list indicator** → Vertical 3 dots icon appears when item is in custom lists ✅
+5. **Plus icon for custom lists** → Replaced "More Lists" with proper Plus icon ✅
+
+**Technical Fixes Applied:**
+
+1. **✅ Added Missing Favorite Option:**
+   - Added favorite option as first item in dropdown list
+   - Proper star icon and toggle functionality implemented
+   - Dropdown now shows: Favorite → Watch Later → Watched → Hidden → Custom Lists
+
+2. **✅ Fixed Icon Mappings:**
+   - Watch Later: Clock → Bookmark icon (as requested)
+   - Watched: Eye → Checkmark icon (as requested)  
+   - Favorite: Star icon (maintained)
+   - Hidden: Eye with slash (maintained)
+   - Custom Lists: Plus icon instead of vertical dots
+
+3. **✅ Enhanced Custom List Detection:**
+   - Added proper custom list detection logic
+   - Shows highlighted vertical 3 dots when item is in any custom list
+   - Custom list indicator appears as separate item in dropdown
+
+4. **✅ Improved Dropdown Layout:**
+   - Updated expanded height calculations for 6 items (4 default + custom indicator + plus)
+   - Proper spacing and visual hierarchy
+   - Gold color highlighting for items in lists
+
+5. **✅ Fixed Store Integration:**
+   - Added missing `isInWatchLater` import from store
+   - Fixed naming conflicts between store methods and local variables
+   - Proper integration with all watchlist store methods
+
+**User Experience Enhancements:**
+- ✅ **Intuitive Tap Behavior:** Single tap adds to favorites, long press shows dropdown
+- ✅ **Correct Visual Feedback:** Gold highlighting when items are in lists
+- ✅ **Proper Icon Usage:** Bookmark for watch later, checkmark for watched
+- ✅ **Custom List Awareness:** Clear indication when item is in custom lists
+- ✅ **Plus Icon for Adding:** Clear visual cue for adding to custom lists
+
+**Files Modified:**
+- ✅ `src/components/StandardizedFavoriteButton.tsx`: Complete functionality overhaul
+
+**Button Functionality Flow:**
+1. **Normal Tap:** Adds/removes from favorites with toggle behavior
+2. **Long Press:** Shows dropdown with all 5 options in correct order
+3. **Dropdown Selection:** Click any icon to add/remove from that specific list
+4. **Custom List Indicator:** Vertical 3 dots shows when item is in custom lists
+5. **Plus Button:** Opens full custom list dialog for adding to specific lists
+
+**Status:** ✅ FAVORITE BUTTON COMPREHENSIVE FIX COMPLETE - All functionality working as requested!
+
+**Additional Fix (January 19, 2025):**
+- **Issue:** Extra spacing at bottom of dropdown when custom list indicator not shown
+- **Root Cause:** Fixed height calculation assuming 6 items always present, but custom list indicator is conditional
+- **Solution:** Dynamic height calculation based on actual items displayed (4 default + conditional custom indicator + plus button)
+- **Result:** Dropdown now perfectly sized to content with no extra spacing
+
+**Duplicate Favorite Icon Fix (January 19, 2025):**
+- **Issue:** Two star icons in dropdown - duplicate favorite functionality
+- **Root Cause:** Main button already handles favorites, but dropdown also included separate favorite option
+- **Solution:** Removed favorite from dropdown list since main button single-tap handles favorites
+- **Result:** Clean dropdown with only: Watch Later (bookmark), Watched (checkmark), Hidden (eye-slash), Plus (custom lists)
+- **Behavior:** Single tap main button = add/remove favorites, long press = show other list options
+
+**Main Button Interaction Fix (January 19, 2025):**
+- **Issue:** Main favorite button (star icon) becomes unclickable after dropdown is presented
+- **Root Cause:** handlePressEnd logic prevented normal taps when showDropdown was true
+- **Solution:** Fixed event handling logic to allow normal taps on main button even when dropdown is open
+- **Enhancement:** Added higher z-index to main button when dropdown is visible to ensure clickability
+- **Result:** Main favorite button now remains fully functional even when dropdown is shown
+
+**Main Button Icon Consistency Fix (January 19, 2025):**
+- **Issue:** Main button changing from star to check mark when item was added to other lists (watch later, watched, hidden)
+- **Root Cause:** getButtonState() function was showing Check icon when item was in other lists but not favorites
+- **User Requirement:** Main button should always show star icon regardless of other lists
+- **Solution:** Updated button state logic to always show Star icon, only changing color/fill based on favorites status
+- **Visual Feedback:** 
+  - 💜 **In Favorites:** White filled star with purple background (`bg-purple-500/80` + `text-white` + `fill-current`)
+  - 🌟 **Not in Favorites:** White unfilled star (`text-white`, no fill)
+- **Result:** Star icon remains consistent across hero sections, thumbnails, and all component instances
+
+**Star Fill and Dropdown Highlighting Fixes (January 19, 2025):**
+- **Issue 1:** Default star icon should be white filled instead of unfilled
+- **Solution 1:** Updated default state to show filled star with white color (`fillStar: true`)
+- **Issue 2:** Tapping dropdown icons highlighted all icons instead of just the relevant one
+- **Root Cause:** Dropdown items using `buttonState.text` which could be gold when main button in favorites
+- **Solution 2:** Fixed dropdown item colors to use consistent logic:
+  - **Gold (`text-amber-400`):** Only when item is actually in that specific list
+  - **White (`text-white`):** When item is not in that list
+- **Color Scheme Update:** Dropdown uses gold highlighting while main button uses purple background
+- **Result:** 
+  - ⭐ Star always appears filled (white when not in favorites, purple when in favorites)
+  - 🎯 Only relevant dropdown icons show gold highlighting based on actual list membership
+  - ✅ Dropdown properly dismisses after selecting an option
+  - 🌟 Dual color scheme: Purple for main button favorites, gold for dropdown list membership
+
+**Comprehensive Design Pattern Update (January 19, 2025):**
+- **Issue:** Need consistent favorite icon design across all app layouts and components
+- **New Design Pattern Implemented:**
+  - **🌟 Default State:** Star with no fill (white outline)
+  - **💜 In Favorites (Buttons):** Star with white fill + purple background + purple border
+  - **🌟 In Lists (Dropdowns):** Gold star with no fill (for list membership indication)
+- **Components Updated for Consistency:**
+  - ✅ StandardizedFavoriteButton (main component)
+  - ✅ MovieModal favorite buttons
+  - ✅ ChannelNetworkModal favorite buttons  
+  - ✅ LiveContentModal favorite buttons (purple instead of yellow)
+  - ✅ HeroSection, ContentSection, PersonalizedSection (via StandardizedFavoriteButton)
+  - ✅ StandardizedThumbnail, StandardizedSectionContainer (via StandardizedFavoriteButton)
+- **Universal Application:** Design pattern now consistent across hero sections, thumbnails, modals, section containers, and all grid/row layouts
+
+**Dropdown Color Scheme Update (January 19, 2025):**
+- **Issue:** Dropdown highlighting should use gold instead of purple for better visual distinction
+- **Solution:** Changed dropdown item colors from purple to gold/amber for list membership indication
+- **Result:** 
+  - 💜 **Main Button:** Purple background when in favorites
+  - 🌟 **Dropdown Items:** Gold highlighting when item is in corresponding list
+  - 🌟 **Custom List Indicator:** Gold 3-dots icon when item is in custom lists
+  - ✨ **Better UX:** Clear visual distinction between main favorites and dropdown list memberships
+
+## ✅ **LATEST ENHANCEMENT: Hero Section Dropdown-Aware Slideshow - January 19, 2025** ✅
+
+**Enhancement:** Enhanced hero section slideshow to pause when favorite dropdown is open while continuing trailer playback, with automatic resume after trailer completion
+**Status:** ✅ COMPLETE - Hero section now intelligently pauses slideshow during user interactions while maintaining trailer engagement
+
+**User Request:** "In hero section, pause switching to the next item in the slideshow if the favorite dropdown is being shown, continue to play the remainder of the trailer if it's playing a trailer as a user may be engaged, and present the media cover at the end of the trailer and resume auto slideshow 5 seconds after"
+
+**Technical Implementation:**
+
+1. **✅ Dropdown State Detection:**
+   - Added `isDropdownOpen` state to track when favorite dropdown is visible
+   - Created `handleDropdownStateChange` callback to receive dropdown state from StandardizedFavoriteButton
+   - Enhanced StandardizedFavoriteButton with `onDropdownStateChange` prop to communicate state changes
+
+2. **✅ Slideshow Pause Logic:**
+   - Modified auto-advance slideshow effect to include dropdown state: `!isDropdownOpen`
+   - Slideshow now pauses when dropdown is open, preventing interruption during user interaction
+   - Maintains all existing pause conditions (manual control, section expansion, global pause)
+
+3. **✅ Trailer Continuation:**
+   - Trailers continue playing when dropdown is open (not affected by slideshow pause)
+   - User can interact with favorite dropdown while trailer plays in background
+   - Trailer remains engaged and uninterrupted during dropdown interaction
+
+4. **✅ Trailer Completion Detection:**
+   - Added trailer completion detection using 3-minute timeout (typical trailer duration)
+   - Implemented `handleTrailerEnd` function to handle trailer completion
+   - Shows media cover automatically when trailer completes
+
+5. **✅ Auto-Resume Functionality:**
+   - Slideshow resumes 5 seconds after trailer completion
+   - Only resumes if dropdown is closed and user still on same content
+   - Prevents premature resume if user is still interacting with dropdown
+
+**Code Changes:**
+- ✅ **HeroSection.tsx:** Added dropdown state tracking, trailer completion detection, and enhanced slideshow logic
+- ✅ **StandardizedFavoriteButton.tsx:** Added dropdown state callback functionality
+
+**User Experience Impact:**
+- ✅ **Uninterrupted Interaction:** Users can browse favorite dropdown without slideshow interruption
+- ✅ **Trailer Engagement:** Trailers continue playing while dropdown is open, maintaining user engagement
+- ✅ **Intelligent Resume:** Slideshow automatically resumes after trailer completion with proper delay
+- ✅ **Smart Timing:** 5-second delay after trailer allows user to view cover content before next slide
+- ✅ **Consistent Behavior:** All existing slideshow pause conditions maintained alongside new dropdown logic
+
+**Technical Features:**
+- ✅ **Trailer Timeout Management:** Comprehensive cleanup of trailer completion timeouts
+- ✅ **State Synchronization:** Dropdown state properly synchronized between components
+- ✅ **Memory Management:** Proper cleanup of all timeouts on component unmount
+- ✅ **Edge Case Handling:** Handles slide changes, manual stops, and modal interactions
+- ✅ **Debug Logging:** Comprehensive logging for troubleshooting slideshow behavior
+
+**Files Modified:**
+- ✅ `src/components/HeroSection.tsx`: Enhanced with dropdown-aware slideshow logic
+- ✅ `src/components/StandardizedFavoriteButton.tsx`: Added dropdown state callback functionality
+
+**Status:** ✅ DROPDOWN-AWARE SLIDESHOW COMPLETE - Hero section now provides intelligent slideshow behavior that respects user interactions while maintaining trailer engagement!
