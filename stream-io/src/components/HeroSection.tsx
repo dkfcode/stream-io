@@ -56,6 +56,11 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [trailerEndTimeouts, setTrailerEndTimeouts] = useState<Record<number, ReturnType<typeof setTimeout>>>({});
   
+  // NEW: Double tap detection state
+  const [lastTapTime, setLastTapTime] = useState<Record<number, number>>({});
+  const [tapCount, setTapCount] = useState<Record<number, number>>({});
+  const doubleTapThreshold = 400; // 400ms threshold for double tap detection
+  
   const timeoutRefs = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const videoRefs = useRef<Record<number, HTMLIFrameElement | null>>({});
   const manualControlTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -204,12 +209,24 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
 
   // Start trailer for current slide when conditions change
   useEffect(() => {
+    console.log('HeroSection trailer start effect:', {
+      platformContentLength: platformContent.length,
+      currentSlide,
+      isPaused,
+      autoplayEnabled: preferences.autoplayVideos,
+      currentContentId: platformContent[currentSlide]?.id,
+      hasTrailerKey: platformContent[currentSlide] ? !!trailerKeys[platformContent[currentSlide].id] : false,
+      isTrailerStopped: platformContent[currentSlide] ? !!trailerStopped[platformContent[currentSlide].id] : false,
+      isTextPermanentlyVisible
+    });
+    
     if (platformContent.length > 0) {
       const currentContent = platformContent[currentSlide];
       if (!currentContent) return;
 
       // Start trailer for current slide after 4 seconds (only if not paused, autoplay is enabled, and trailer hasn't been manually stopped)
       if (!isPaused && preferences.autoplayVideos && trailerKeys[currentContent.id] && !trailerStopped[currentContent.id] && !isTextPermanentlyVisible) {
+        console.log('Scheduling trailer start for content:', currentContent.title || currentContent.name);
         if (timeoutRefs.current[currentContent.id]) {
           clearTimeout(timeoutRefs.current[currentContent.id]);
         }
@@ -217,6 +234,7 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         timeoutRefs.current[currentContent.id] = setTimeout(() => {
           const trailerKey = trailerKeys[currentContent.id];
           if (trailerKey) {
+            console.log('Starting trailer for:', currentContent.title || currentContent.name);
             openTrailer(trailerKey, currentContent.title || currentContent.name || '', currentContent.media_type as 'movie' | 'tv');
             
             // NEW: Set up trailer completion detection
@@ -232,6 +250,14 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
             }, trailerDuration);
           }
         }, 4000);
+      } else {
+        console.log('Not starting trailer due to conditions:', {
+          isPaused,
+          autoplayEnabled: preferences.autoplayVideos,
+          hasTrailerKey: !!trailerKeys[currentContent.id],
+          isTrailerStopped: !!trailerStopped[currentContent.id],
+          isTextPermanentlyVisible
+        });
       }
       
       // Start text fade-out after 7 seconds (only if autoplay is enabled and not permanently visible)
@@ -251,8 +277,18 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
 
   // Auto-advance slides (pause when a section is expanded OR when favorite dropdown is open)
   useEffect(() => {
+    console.log('HeroSection auto-advance effect:', {
+      isManuallyControlled,
+      isPaused,
+      isDropdownOpen,
+      platformContentLength: platformContent.length,
+      shouldAdvance: !isManuallyControlled && !isPaused && !isDropdownOpen && platformContent.length > 1
+    });
+    
     if (!isManuallyControlled && !isPaused && !isDropdownOpen && platformContent.length > 1) {
+      console.log('Starting auto-advance interval');
       const interval = setInterval(() => {
+        console.log('Auto-advance triggered, moving to next slide');
         setCurrentSlide((prev) => {
           const nextSlide = (prev + 1) % platformContent.length;
           handleSlideChange(nextSlide);
@@ -260,20 +296,38 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
         });
       }, 21000); // 21 seconds per slide to allow time for trailer engagement
 
-      return () => clearInterval(interval);
+      return () => {
+        console.log('Clearing auto-advance interval');
+        clearInterval(interval);
+      };
+    } else {
+      console.log('Auto-advance paused due to conditions:', {
+        isManuallyControlled,
+        isPaused,
+        isDropdownOpen,
+        platformContentLength: platformContent.length
+      });
     }
   }, [isManuallyControlled, isPaused, isDropdownOpen, platformContent.length]);
 
   // Stop all trailers when paused
   useEffect(() => {
+    console.log('HeroSection trailer pause effect:', { isPaused });
     if (isPaused) {
+      console.log('Hero section is paused - stopping trailers and clearing timeouts');
       // Clear all trailer timeouts
       Object.values(timeoutRefs.current).forEach(timeout => {
         if (timeout) clearTimeout(timeout);
       });
       // Stop any active trailer - we don't know the specific ID, so we'll rely on the TrailerContext
+      closeTrailer();
+      
+      // Also clear any trailer end timeouts
+      Object.values(trailerEndTimeoutRef.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
     }
-  }, [isPaused]);
+  }, [isPaused, closeTrailer]);
 
   const handleSlideChange = (newSlide: number) => {
     if (newSlide === currentSlide) return;
@@ -637,8 +691,8 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
       Math.pow(dragCurrent.y - dragStart.y, 2)
     );
     
-    // Only consider it a drag if there was significant movement (not just time-based)
-    if (distance > 20) {
+    // Only consider it a drag if there was significant movement (reduced threshold for better tap detection)
+    if (distance > 15) {
       console.log('Click prevented due to drag movement:', distance);
       return;
     }
@@ -700,43 +754,62 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     const currentContent = platformContent[currentSlide];
     if (!currentContent) return;
     
-    const isTrailerPlaying = isTrailerActive && trailerKeys[currentContent.id] && !trailerStopped[currentContent.id];
-    const hasTrailerStopped = trailerStopped[currentContent.id];
-    const hasTrailerKey = !!trailerKeys[currentContent.id];
+    const currentTime = Date.now();
+    const contentId = currentContent.id;
+    const lastTap = lastTapTime[contentId] || 0;
+    const currentTapCount = tapCount[contentId] || 0;
     
-    console.log('Hero section center interaction:', {
-      contentId: currentContent.id,
+    // Double tap detection logic
+    const isDoubleTap = currentTime - lastTap < doubleTapThreshold;
+    
+    // Update tap tracking
+    setLastTapTime(prev => ({ ...prev, [contentId]: currentTime }));
+    setTapCount(prev => ({ ...prev, [contentId]: isDoubleTap ? currentTapCount + 1 : 1 }));
+    
+    const isTrailerPlaying = isTrailerActive && trailerKeys[contentId] && !trailerStopped[contentId];
+    const hasTrailerStopped = trailerStopped[contentId];
+    const hasTrailerKey = !!trailerKeys[contentId];
+    
+    console.log('Hero section interaction:', {
+      contentId,
       isTrailerPlaying,
       hasTrailerStopped,
       hasTrailerKey,
-      showTrailer: isTrailerActive,
-      trailerStopped: trailerStopped[currentContent.id],
-      isTextVisible,
-      isTextPermanentlyVisible
+      isDoubleTap,
+      currentTapCount: isDoubleTap ? currentTapCount + 1 : 1,
+      timeSinceLastTap: currentTime - lastTap
     });
     
-    // Fixed interaction logic:
-    // 1. First tap when trailer is playing → Pause trailer, show cover with title and text
-    // 2. Second tap when trailer is paused/cover showing → Open modal
-    // 3. No trailer available → Open modal directly
+    // Clear tap count after a delay to reset for next interaction
+    setTimeout(() => {
+      setTapCount(prev => ({ ...prev, [contentId]: 0 }));
+    }, doubleTapThreshold + 100);
     
-    if (isTrailerPlaying) {
-      // First tap: Pause the trailer and show cover content
-      console.log('First tap: Pausing trailer and showing cover content');
-      pauseTrailer(currentContent.id);
-      restoreTextAndShowCover(currentContent.id);
-    } else if (hasTrailerKey && hasTrailerStopped) {
-      // Second tap: Trailer is paused/cover showing, open modal
-      console.log('Second tap: Opening modal from cover state');
-      onPlay(currentContent);
-    } else if (!hasTrailerKey) {
-      // No trailer available, open modal directly
-      console.log('No trailer available, opening modal directly');
+    // Enhanced interaction logic for intuitive single tap behavior:
+    if (isDoubleTap) {
+      // Double tap: Always open modal (fallback/alternative method)
+      console.log('Double tap detected: Opening modal');
       onPlay(currentContent);
     } else {
-      // Fallback case: Open modal
-      console.log('Fallback: Opening modal');
-      onPlay(currentContent);
+      // Single tap behavior
+      if (isTrailerPlaying) {
+        // Single tap when trailer is playing → Pause trailer and show cover
+        console.log('Single tap while trailer playing: Pausing trailer and showing cover');
+        pauseTrailer(contentId);
+        restoreTextAndShowCover(contentId);
+      } else if (hasTrailerKey && hasTrailerStopped) {
+        // Single tap when showing cover (trailer stopped) → Open modal
+        console.log('Single tap while showing cover: Opening modal');
+        onPlay(currentContent);
+      } else if (!hasTrailerKey) {
+        // No trailer available → Single tap opens modal directly
+        console.log('No trailer available, single tap opens modal');
+        onPlay(currentContent);
+      } else {
+        // Fallback: Open modal
+        console.log('Fallback: Opening modal');
+        onPlay(currentContent);
+      }
     }
   };
 
@@ -815,8 +888,8 @@ const HeroSection = React.forwardRef<HeroSectionRef, HeroSectionProps>(({ onPlay
     >
       {/* Background Image/Video */}
       <div 
-        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ${
-          isTrailerActive && trailerKeys[currentContent.id] ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+        className={`absolute inset-0 bg-cover bg-[center_top] bg-no-repeat transition-all duration-1000 ${
+          isTrailerActive && trailerKeys[currentContent.id] ? 'opacity-0' : 'opacity-100'
         }`}
         style={{ backgroundImage: `url(${backdrop})` }}
       >

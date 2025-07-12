@@ -1027,14 +1027,14 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
                 <img
                   src={`https://image.tmdb.org/t/p/original${combinedContent[currentSlide].backdrop_path || combinedContent[currentSlide].poster_path}`}
                   alt={combinedContent[currentSlide].title || combinedContent[currentSlide].name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-[center_top]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
               </div>
 
               {/* Trailer Video */}
-              {showTrailer[combinedContent[currentSlide].id] && trailerKeys[combinedContent[currentSlide].id] && isTrailerActive('personalizedSection', combinedContent[currentSlide].id) && !isModalOpen && (
+              {showTrailer[combinedContent[currentSlide].id] && trailerKeys[combinedContent[currentSlide].id] && isTrailerActive && !isModalOpen && (
                 <div className="absolute inset-0 z-10">
                   <iframe
                     key={`${combinedContent[currentSlide].id}-${iframeKey}`}
@@ -1136,7 +1136,7 @@ const PersonalizedSection: React.FC<PersonalizedSectionProps> = ({
                       <span>More Info</span>
                     </button>
 
-                    {showTrailer[combinedContent[currentSlide].id] && isTrailerActive('personalizedSection', combinedContent[currentSlide].id) && !isModalOpen && (
+                    {showTrailer[combinedContent[currentSlide].id] && isTrailerActive && !isModalOpen && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

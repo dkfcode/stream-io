@@ -95,6 +95,17 @@ const HomePage: React.FC<HomePageProps> = ({ selectedFilter, isPaused: externalI
   const heroObserverRef = useRef<HTMLDivElement>(null);
   const [isHeroInView, setIsHeroInView] = useState(true);
 
+  // Log expanded section changes for debugging
+  useEffect(() => {
+    console.log('HomePage expandedSection changed:', {
+      expandedSection,
+      isHeroInView,
+      externalIsPaused,
+      modalIsOpen: isOpen,
+      heroShouldBePaused: externalIsPaused || isOpen || expandedSection !== null || !isHeroInView
+    });
+  }, [expandedSection, isHeroInView, externalIsPaused, isOpen]);
+
   // Map selected genre IDs to TMDB IDs
   const selectedTmdbGenres = useMemo(() => {
     if (!preferences?.selected_genres) return [];
@@ -322,7 +333,10 @@ const HomePage: React.FC<HomePageProps> = ({ selectedFilter, isPaused: externalI
               items={filteredMovies}
               selectedFilter={selectedFilter}
               isExpanded={expandedSection === "similar-to-movie"}
-              onExpandedChange={(expanded) => setExpandedSection(expanded ? "similar-to-movie" : null)}
+              onExpandedChange={(expanded) => {
+                console.log('Section expansion changed:', { section: "similar-to-movie", expanded });
+                setExpandedSection(expanded ? "similar-to-movie" : null);
+              }}
               onSeeMoreClick={() => handleSeeMoreClick(`Because You Added ${lastAddedMovie.title || ''}`, filteredMovies)}
             />
           </Suspense>
@@ -340,7 +354,10 @@ const HomePage: React.FC<HomePageProps> = ({ selectedFilter, isPaused: externalI
               items={filteredShows}
               selectedFilter={selectedFilter}
               isExpanded={expandedSection === "similar-to-show"}
-              onExpandedChange={(expanded) => setExpandedSection(expanded ? "similar-to-show" : null)}
+              onExpandedChange={(expanded) => {
+                console.log('Section expansion changed:', { section: "similar-to-show", expanded });
+                setExpandedSection(expanded ? "similar-to-show" : null);
+              }}
               onSeeMoreClick={() => handleSeeMoreClick(`Because You Added ${lastAddedShow.title || ''}`, filteredShows)}
             />
           </Suspense>
@@ -371,7 +388,10 @@ const HomePage: React.FC<HomePageProps> = ({ selectedFilter, isPaused: externalI
             items={filteredItems}
             selectedFilter={selectedFilter}
             isExpanded={expandedSection === `genre-${genreId}`}
-            onExpandedChange={(expanded) => setExpandedSection(expanded ? `genre-${genreId}` : null)}
+            onExpandedChange={(expanded) => {
+              console.log('Section expansion changed:', { section: `genre-${genreId}`, expanded });
+              setExpandedSection(expanded ? `genre-${genreId}` : null);
+            }}
             onSeeMoreClick={() => handleSeeMoreClick(`Because You Like ${genre.name}`, filteredItems)}
           />
         </Suspense>
@@ -420,7 +440,10 @@ const HomePage: React.FC<HomePageProps> = ({ selectedFilter, isPaused: externalI
             showExpiring={section.showExpiring}
             showDateAdded={section.showDateAdded}
             isExpanded={expandedSection === section.key}
-            onExpandedChange={(expanded) => setExpandedSection(expanded ? section.key : null)}
+            onExpandedChange={(expanded) => {
+              console.log('Section expansion changed:', { section: section.key, expanded });
+              setExpandedSection(expanded ? section.key : null);
+            }}
             onSeeMoreClick={() => handleSeeMoreClick(section.title, section.data)}
           />
         </Suspense>

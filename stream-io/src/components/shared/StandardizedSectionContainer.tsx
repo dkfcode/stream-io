@@ -566,7 +566,7 @@ const StandardizedSectionContainer: React.FC<StandardizedSectionContainerProps> 
           <img
             src={`https://image.tmdb.org/t/p/original${currentHeroItem.backdrop_path || currentHeroItem.poster_path}`}
             alt={currentHeroItem.title || currentHeroItem.name}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="absolute inset-0 w-full h-full object-cover object-[center_top]"
           />
           
           {/* Gradient Overlay */}
